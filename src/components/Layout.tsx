@@ -52,7 +52,8 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <div className="stack-section hidden md:flex items-center justify-between border-b border-gray-200 bg-black text-white px-8 py-2" style={{ zIndex: 10 }}>
+      <div className="sticky top-0 z-50 bg-white">
+      <div className="hidden md:flex items-center justify-between border-b border-gray-200 bg-black text-white px-8 py-2">
         <span className="text-xs tracking-wide">{t('nav.tagline')}</span>
         <div className="flex items-center gap-6">
           <Link to="/bounties" className="text-xs font-medium hover:text-[#6666FF] transition-colors">
@@ -79,7 +80,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <div className="stack-section border-b border-gray-200 bg-white px-4 md:px-8 py-4" style={{ zIndex: 20 }}>
+      <div className="border-b border-gray-200 bg-white px-4 md:px-8 py-4">
         <div className="flex items-center gap-4 md:gap-8">
           <Link to="/" className="font-bold text-xl tracking-tight text-black shrink-0">
             Setty
@@ -223,7 +224,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <div className="stack-section hidden md:flex items-center gap-8 border-b border-gray-200 bg-white px-8 py-3" style={{ zIndex: 30 }}>
+      <div className="hidden md:flex items-center gap-8 border-b border-gray-200 bg-white px-8 py-3">
         <Link to="/app" className="text-sm font-medium text-black hover:text-[#0000FF] transition-colors">
           {t('nav.marketplace')}
         </Link>
@@ -285,6 +286,7 @@ export default function Layout() {
           </div>
         </div>
       )}
+      </div>
 
       <main className="flex-1">
         <Outlet />
