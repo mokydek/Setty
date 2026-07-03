@@ -56,32 +56,30 @@ export default function Landing() {
 
   return (
     <div className="bg-white">
-      <section className="stack-section bg-white px-8 py-24 md:py-32 flex flex-col items-center text-center" style={{ zIndex: 10 }}>
-        <div className="max-w-4xl mx-auto flex flex-col items-center">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-black leading-none mb-8">
-            {t('landing.hero.title')}
-          </h1>
-          <p className="text-base md:text-lg text-black/60 max-w-2xl mb-12 leading-relaxed">
-            {t('landing.hero.subtitle')}
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Link
-              to="/app"
-              className="rounded-none bg-[#0000FF] text-white px-8 py-4 text-sm font-semibold hover:bg-black transition-colors w-full sm:w-auto text-center"
-            >
-              {t('landing.hero.exploreAssets')}
-            </Link>
-            <Link
-              to="/bounties"
-              className="rounded-none border border-black text-black px-8 py-4 text-sm font-semibold hover:bg-black hover:text-white transition-colors w-full sm:w-auto text-center"
-            >
-              {t('landing.hero.postBounty')}
-            </Link>
-          </div>
+      <section className="px-8 py-24 md:py-32 flex flex-col items-center text-center max-w-4xl mx-auto">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-black leading-none mb-8">
+          {t('landing.hero.title')}
+        </h1>
+        <p className="text-base md:text-lg text-black/60 max-w-2xl mb-12 leading-relaxed">
+          {t('landing.hero.subtitle')}
+        </p>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link
+            to="/app"
+            className="rounded-none bg-[#0000FF] text-white px-8 py-4 text-sm font-semibold hover:bg-black transition-colors w-full sm:w-auto text-center"
+          >
+            {t('landing.hero.exploreAssets')}
+          </Link>
+          <Link
+            to="/bounties"
+            className="rounded-none border border-black text-black px-8 py-4 text-sm font-semibold hover:bg-black hover:text-white transition-colors w-full sm:w-auto text-center"
+          >
+            {t('landing.hero.postBounty')}
+          </Link>
         </div>
       </section>
 
-      <section className="stack-section bg-white px-8 py-16 border-t border-gray-200" style={{ zIndex: 20 }}>
+      <section className="px-8 py-16 border-t border-gray-200">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {STAT_KEYS.map((key, index) => (
             <div key={key} className="flex flex-col items-center text-center">
@@ -96,7 +94,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="stack-section bg-white px-8 py-24 border-t border-gray-200" style={{ zIndex: 30 }}>
+      <section className="px-8 py-24 border-t border-gray-200">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           <div className="flex flex-col gap-4">
             <Layers size={28} strokeWidth={1.5} className="text-black" />
@@ -130,7 +128,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="stack-section bg-white px-8 py-24 border-t border-gray-200" style={{ zIndex: 40 }}>
+      <section className="px-8 py-24 border-t border-gray-200">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-10">
             <div>
@@ -158,7 +156,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="stack-section bg-white px-8 py-24 border-t border-gray-200" style={{ zIndex: 50 }}>
+      <section className="px-8 py-24 border-t border-gray-200">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold tracking-tight text-black mb-16 text-center">
             {t('landing.steps.title')}
@@ -186,7 +184,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="stack-section px-8 py-24 border-t border-gray-200 bg-white" style={{ zIndex: 60 }}>
+      <section className="px-8 py-24 border-t border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-black">
             {t('landing.cta.title')}
@@ -208,11 +206,9 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="stack-section bg-white px-8 py-8 border-t border-gray-200" style={{ zIndex: 70 }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span className="font-bold text-lg tracking-tight text-black">{t('footer.brand')}</span>
-          <span className="text-sm text-black/40">{new Date().getFullYear()}</span>
-        </div>
+      <footer className="px-8 py-8 border-t border-gray-200 flex items-center justify-between max-w-6xl mx-auto">
+        <span className="font-bold text-lg tracking-tight text-black">{t('footer.brand')}</span>
+        <span className="text-sm text-black/40">{new Date().getFullYear()}</span>
       </footer>
     </div>
   )

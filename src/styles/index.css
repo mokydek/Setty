@@ -39,9 +39,3 @@ a {
 button {
   font-family: 'Space Grotesk', sans-serif;
 }
-
-/* ── Stacked scroll sections (each new section slides over and covers the previous) ── */
-.stack-section {
-  position: sticky;
-  top: 0;
-}
