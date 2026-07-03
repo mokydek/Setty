@@ -61,8 +61,8 @@ function MyBountyRow({ bounty }: { bounty: MyBounty }) {
 
       <div className="flex items-center gap-6">
         <span
-          className={`text-xs font-medium px-3 py-1 rounded-none ${
-            bounty.status === 'Completed' ? 'bg-black text-white' : 'border border-black text-black'
+          className={`text-xs font-medium uppercase tracking-widest ${
+            bounty.status === 'Completed' ? 'text-black' : 'text-black/40'
           }`}
         >
           {bounty.status}

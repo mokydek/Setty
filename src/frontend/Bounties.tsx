@@ -53,7 +53,7 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
     <div className="rounded-none border border-black bg-white p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
         <h3 className="text-lg font-bold tracking-tight text-black">{bounty.title}</h3>
-        <span className="rounded-none bg-black text-white text-xs font-medium px-3 py-1 whitespace-nowrap">
+        <span className="text-xs font-medium text-black/50 uppercase tracking-widest whitespace-nowrap pt-1">
           {bounty.style}
         </span>
       </div>
