@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Box, Image, Download } from 'lucide-react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 interface OwnedAsset {
   id: number
@@ -11,7 +12,7 @@ interface OwnedAsset {
 interface MyBounty {
   id: number
   title: string
-  status: 'In Progress' | 'Completed'
+  status: 'inProgress' | 'completed'
 }
 
 type Tab = 'assets' | 'bounties'
@@ -28,13 +29,14 @@ const OWNED_ASSETS: OwnedAsset[] = [
 ]
 
 const MY_BOUNTIES: MyBounty[] = [
-  { id: 1, title: 'Low Poly Watchtower', status: 'In Progress' },
-  { id: 2, title: 'Cyberpunk Vending Machine', status: 'Completed' },
-  { id: 3, title: 'Hand Painted Bridge Tile', status: 'In Progress' },
-  { id: 4, title: 'Realistic Barrel Cluster', status: 'Completed' },
+  { id: 1, title: 'Low Poly Watchtower', status: 'inProgress' },
+  { id: 2, title: 'Cyberpunk Vending Machine', status: 'completed' },
+  { id: 3, title: 'Hand Painted Bridge Tile', status: 'inProgress' },
+  { id: 4, title: 'Realistic Barrel Cluster', status: 'completed' },
 ]
 
 function OwnedAssetCard({ asset }: { asset: OwnedAsset }) {
+  const { t } = useLanguage()
   const Icon = asset.kind === 'model' ? Box : Image
 
   return (
@@ -48,13 +50,15 @@ function OwnedAssetCard({ asset }: { asset: OwnedAsset }) {
 
       <button className="rounded-none bg-[#0000FF] text-white px-3 py-2 flex items-center justify-center gap-2 text-xs font-medium hover:bg-black transition-colors mt-auto">
         <Download size={14} strokeWidth={1.5} />
-        Download
+        {t('dashboard.download')}
       </button>
     </div>
   )
 }
 
 function MyBountyRow({ bounty }: { bounty: MyBounty }) {
+  const { t } = useLanguage()
+
   return (
     <div className="rounded-none border border-black bg-white p-6 flex items-center justify-between gap-4">
       <span className="text-sm font-bold text-black tracking-tight">{bounty.title}</span>
@@ -62,14 +66,14 @@ function MyBountyRow({ bounty }: { bounty: MyBounty }) {
       <div className="flex items-center gap-6">
         <span
           className={`text-xs font-medium uppercase tracking-widest ${
-            bounty.status === 'Completed' ? 'text-black' : 'text-black/40'
+            bounty.status === 'completed' ? 'text-black' : 'text-black/40'
           }`}
         >
-          {bounty.status}
+          {bounty.status === 'completed' ? t('dashboard.statusCompleted') : t('dashboard.statusInProgress')}
         </span>
 
         <button className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors">
-          {bounty.status === 'Completed' ? 'View Files' : 'Mark Done'}
+          {bounty.status === 'completed' ? t('dashboard.viewFiles') : t('dashboard.markDone')}
         </button>
       </div>
     </div>
@@ -77,12 +81,13 @@ function MyBountyRow({ bounty }: { bounty: MyBounty }) {
 }
 
 export default function Dashboard() {
+  const { t } = useLanguage()
   const [tab, setTab] = useState<Tab>('assets')
 
   return (
     <div className="px-8 py-12">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight text-black mb-6">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-black mb-6">{t('dashboard.title')}</h1>
 
         <div className="flex items-center gap-8 border-b border-gray-200">
           <button
@@ -93,7 +98,7 @@ export default function Dashboard() {
                 : 'text-black/40 hover:text-black'
             }`}
           >
-            My Assets
+            {t('dashboard.myAssets')}
           </button>
           <button
             onClick={() => setTab('bounties')}
@@ -103,7 +108,7 @@ export default function Dashboard() {
                 : 'text-black/40 hover:text-black'
             }`}
           >
-            My Bounties
+            {t('dashboard.myBounties')}
           </button>
         </div>
       </div>

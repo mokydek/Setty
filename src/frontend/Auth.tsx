@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../backend/supabase'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type AuthMode = 'sign-in' | 'sign-up'
 
 export default function Auth() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [mode, setMode] = useState<AuthMode>('sign-in')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,12 +40,10 @@ export default function Auth() {
     <div className="min-h-full flex items-center justify-center px-8 py-24">
       <div className="w-full max-w-sm">
         <h1 className="text-3xl font-bold tracking-tight text-black mb-2">
-          {mode === 'sign-in' ? 'Sign In' : 'Sign Up'}
+          {mode === 'sign-in' ? t('auth.signIn') : t('auth.signUp')}
         </h1>
         <p className="text-sm text-black/60 mb-8">
-          {mode === 'sign-in'
-            ? 'Access your Setty account.'
-            : 'Create a new Setty account.'}
+          {mode === 'sign-in' ? t('auth.signInSubtitle') : t('auth.signUpSubtitle')}
         </p>
 
         {error && (
@@ -55,7 +55,7 @@ export default function Auth() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label htmlFor="email" className="text-xs font-medium text-black/60">
-              Email
+              {t('auth.email')}
             </label>
             <input
               id="email"
@@ -69,7 +69,7 @@ export default function Auth() {
 
           <div className="flex flex-col gap-2">
             <label htmlFor="password" className="text-xs font-medium text-black/60">
-              Password
+              {t('auth.password')}
             </label>
             <input
               id="password"
@@ -86,7 +86,7 @@ export default function Auth() {
             disabled={loading}
             className="rounded-none bg-[#0000FF] text-white px-6 py-3 text-sm font-semibold hover:bg-black transition-colors mt-2 disabled:opacity-50"
           >
-            {loading ? 'Please wait...' : mode === 'sign-in' ? 'Sign In' : 'Sign Up'}
+            {loading ? t('auth.pleaseWait') : mode === 'sign-in' ? t('auth.signIn') : t('auth.signUp')}
           </button>
         </form>
 
@@ -98,9 +98,7 @@ export default function Auth() {
           }}
           className="text-sm text-black/60 hover:text-[#0000FF] transition-colors mt-6"
         >
-          {mode === 'sign-in'
-            ? "Don't have an account? Sign up"
-            : 'Already have an account? Sign in'}
+          {mode === 'sign-in' ? t('auth.noAccount') : t('auth.hasAccount')}
         </button>
       </div>
     </div>

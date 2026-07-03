@@ -10,48 +10,31 @@ import {
   UploadCloud,
   Wallet,
 } from 'lucide-react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 interface PreviewAsset {
   id: number
   title: string
-  style: string
+  styleKey: string
   price: string
   kind: 'model' | 'sprite'
 }
 
 const PREVIEW_ASSETS: PreviewAsset[] = [
-  { id: 1, title: 'Voxel Forest Pack', style: 'Low Poly', price: '$4.99', kind: 'model' },
-  { id: 2, title: 'Neon Alley Tileset', style: 'Cyberpunk', price: '$6.50', kind: 'sprite' },
-  { id: 3, title: 'Hand Drawn Foliage', style: 'Hand painted', price: '$3.25', kind: 'sprite' },
-  { id: 4, title: 'Photoreal Rock Set', style: 'Realistic', price: '$9.00', kind: 'model' },
+  { id: 1, title: 'Voxel Forest Pack', styleKey: 'lowPoly', price: '$4.99', kind: 'model' },
+  { id: 2, title: 'Neon Alley Tileset', styleKey: 'cyberpunk', price: '$6.50', kind: 'sprite' },
+  { id: 3, title: 'Hand Drawn Foliage', styleKey: 'handPainted', price: '$3.25', kind: 'sprite' },
+  { id: 4, title: 'Photoreal Rock Set', styleKey: 'realistic', price: '$9.00', kind: 'model' },
 ]
 
-const STATS = [
-  { value: '1,200+', label: 'Curated assets' },
-  { value: '340+', label: 'Verified artists' },
-  { value: '95%', label: 'Style match rate' },
-  { value: '$180K+', label: 'Paid to creators' },
-]
+const STAT_KEYS = ['assets', 'artists', 'matchRate', 'paidOut'] as const
+const STAT_VALUES = ['1,200+', '340+', '95%', '$180K+']
 
-const STEPS = [
-  {
-    icon: Search,
-    title: 'Browse by style',
-    description: 'Filter the entire catalog by strict visual style, so every result already fits your project.',
-  },
-  {
-    icon: Wallet,
-    title: 'Buy what you need',
-    description: 'Purchase single assets at a fair price instead of committing to oversized bundles.',
-  },
-  {
-    icon: UploadCloud,
-    title: 'Fill the gaps with bounties',
-    description: 'Missing a piece. Post a bounty and receive a matching asset from a verified artist.',
-  },
-]
+const STEP_ICONS = [Search, Wallet, UploadCloud]
+const STEP_KEYS = ['browse', 'buy', 'bounty'] as const
 
 function PreviewCard({ asset }: { asset: PreviewAsset }) {
+  const { t } = useLanguage()
   const Icon = asset.kind === 'model' ? Box : Image
 
   return (
@@ -60,47 +43,52 @@ function PreviewCard({ asset }: { asset: PreviewAsset }) {
         <Icon size={28} strokeWidth={1.5} className="text-black/30" />
       </div>
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 uppercase tracking-widest mb-4">{asset.style}</span>
+      <span className="text-xs text-black/50 uppercase tracking-widest mb-4">
+        {t(`marketplace.styles.${asset.styleKey}`)}
+      </span>
       <span className="text-sm font-semibold text-black mt-auto">{asset.price}</span>
     </div>
   )
 }
 
 export default function Landing() {
+  const { t } = useLanguage()
+
   return (
     <div className="bg-white">
       <section className="px-8 py-24 md:py-32 flex flex-col items-center text-center max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-black leading-none mb-8">
-          End the Frankenstein Effect in Your Games
+          {t('landing.hero.title')}
         </h1>
         <p className="text-base md:text-lg text-black/60 max-w-2xl mb-12 leading-relaxed">
-          Setty is a curated marketplace for 2D and 3D digital assets with strict style
-          synchronization, so every piece you buy fits together by design.
+          {t('landing.hero.subtitle')}
         </p>
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Link
             to="/app"
             className="rounded-none bg-[#0000FF] text-white px-8 py-4 text-sm font-semibold hover:bg-black transition-colors w-full sm:w-auto text-center"
           >
-            Explore Assets
+            {t('landing.hero.exploreAssets')}
           </Link>
           <Link
             to="/bounties"
             className="rounded-none border border-black text-black px-8 py-4 text-sm font-semibold hover:bg-black hover:text-white transition-colors w-full sm:w-auto text-center"
           >
-            Post a Bounty
+            {t('landing.hero.postBounty')}
           </Link>
         </div>
       </section>
 
       <section className="px-8 py-16 border-t border-gray-200">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center text-center">
+          {STAT_KEYS.map((key, index) => (
+            <div key={key} className="flex flex-col items-center text-center">
               <span className="text-3xl md:text-4xl font-bold tracking-tight text-black mb-2">
-                {stat.value}
+                {STAT_VALUES[index]}
               </span>
-              <span className="text-xs text-black/50 uppercase tracking-widest">{stat.label}</span>
+              <span className="text-xs text-black/50 uppercase tracking-widest">
+                {t(`landing.stats.${key}`)}
+              </span>
             </div>
           ))}
         </div>
@@ -110,28 +98,31 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
           <div className="flex flex-col gap-4">
             <Layers size={28} strokeWidth={1.5} className="text-black" />
-            <h3 className="text-xl font-bold tracking-tight text-black">Curated Collections</h3>
+            <h3 className="text-xl font-bold tracking-tight text-black">
+              {t('landing.features.curated.title')}
+            </h3>
             <p className="text-sm text-black/60 leading-relaxed">
-              Every asset is strictly organized by visual style, so anything you pick from a
-              collection is guaranteed to be compatible with the rest.
+              {t('landing.features.curated.description')}
             </p>
           </div>
 
           <div className="flex flex-col gap-4">
             <ShoppingBag size={28} strokeWidth={1.5} className="text-[#0000FF]" />
-            <h3 className="text-xl font-bold tracking-tight text-black">A La Carte Buying</h3>
+            <h3 className="text-xl font-bold tracking-tight text-black">
+              {t('landing.features.alaCarte.title')}
+            </h3>
             <p className="text-sm text-black/60 leading-relaxed">
-              Buy exactly the single item you need, without paying for massive bundles full of
-              assets you will never use.
+              {t('landing.features.alaCarte.description')}
             </p>
           </div>
 
           <div className="flex flex-col gap-4">
             <Target size={28} strokeWidth={1.5} className="text-black" />
-            <h3 className="text-xl font-bold tracking-tight text-black">The Bounty System</h3>
+            <h3 className="text-xl font-bold tracking-tight text-black">
+              {t('landing.features.bounty.title')}
+            </h3>
             <p className="text-sm text-black/60 leading-relaxed">
-              Missing a specific asset in your style. Post a micro task and let 3D and 2D artists
-              deliver exactly what your project needs.
+              {t('landing.features.bounty.description')}
             </p>
           </div>
         </div>
@@ -142,15 +133,17 @@ export default function Landing() {
           <div className="flex items-end justify-between mb-10">
             <div>
               <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-2 block">
-                From the marketplace
+                {t('landing.preview.label')}
               </span>
-              <h2 className="text-3xl font-bold tracking-tight text-black">Recently added assets</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-black">
+                {t('landing.preview.title')}
+              </h2>
             </div>
             <Link
               to="/app"
               className="hidden sm:flex items-center gap-2 text-sm font-medium text-black hover:text-[#0000FF] transition-colors"
             >
-              View all
+              {t('landing.preview.viewAll')}
               <ArrowRight size={16} strokeWidth={1.5} />
             </Link>
           </div>
@@ -166,20 +159,24 @@ export default function Landing() {
       <section className="px-8 py-24 border-t border-gray-200">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold tracking-tight text-black mb-16 text-center">
-            How Setty works
+            {t('landing.steps.title')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {STEPS.map((step, index) => {
-              const Icon = step.icon
+            {STEP_KEYS.map((key, index) => {
+              const Icon = STEP_ICONS[index]
               return (
-                <div key={step.title} className="flex flex-col gap-4">
+                <div key={key} className="flex flex-col gap-4">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-medium text-black/30">{`0${index + 1}`}</span>
                     <Icon size={24} strokeWidth={1.5} className="text-[#0000FF]" />
                   </div>
-                  <h3 className="text-lg font-bold tracking-tight text-black">{step.title}</h3>
-                  <p className="text-sm text-black/60 leading-relaxed">{step.description}</p>
+                  <h3 className="text-lg font-bold tracking-tight text-black">
+                    {t(`landing.steps.${key}.title`)}
+                  </h3>
+                  <p className="text-sm text-black/60 leading-relaxed">
+                    {t(`landing.steps.${key}.description`)}
+                  </p>
                 </div>
               )
             })}
@@ -190,27 +187,27 @@ export default function Landing() {
       <section className="px-8 py-24 border-t border-gray-200 bg-white">
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-black">
-            Build a consistent world, one asset at a time
+            {t('landing.cta.title')}
           </h2>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Link
               to="/app"
               className="rounded-none bg-[#0000FF] text-white px-8 py-4 text-sm font-semibold hover:bg-black transition-colors w-full sm:w-auto text-center"
             >
-              Start Browsing
+              {t('landing.cta.startBrowsing')}
             </Link>
             <Link
               to="/auth"
               className="rounded-none border border-black text-black px-8 py-4 text-sm font-semibold hover:bg-black hover:text-white transition-colors w-full sm:w-auto text-center"
             >
-              Create an Account
+              {t('landing.cta.createAccount')}
             </Link>
           </div>
         </div>
       </section>
 
       <footer className="px-8 py-8 border-t border-gray-200 flex items-center justify-between max-w-6xl mx-auto">
-        <span className="font-bold text-lg tracking-tight text-black">Setty</span>
+        <span className="font-bold text-lg tracking-tight text-black">{t('footer.brand')}</span>
         <span className="text-sm text-black/40">{new Date().getFullYear()}</span>
       </footer>
     </div>
