@@ -67,7 +67,7 @@ export default function Cart() {
               >
                 <div className="flex flex-col">
                   <h3 className="text-sm font-bold text-black tracking-tight mb-1">{item.title}</h3>
-                  <span className="text-xs text-black/50">{item.author}</span>
+                  <span className="text-xs text-black/50">{item.author_name}</span>
                 </div>
 
                 <div className="flex items-center gap-6">

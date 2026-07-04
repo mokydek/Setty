@@ -1,62 +1,38 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Image, ShoppingCart, Search, Star, ChevronDown, Check } from 'lucide-react'
+import { ShoppingCart, Search, ChevronDown, Check, ImageOff } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
 import { useCart, type CartItem } from '../contexts/CartContext'
 
-type Asset = CartItem
+type Asset = CartItem & { created_at?: string }
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
-const CATEGORY_KEYS = ['all', 'environment', 'character', 'prop', 'vfx', 'uiKit'] as const
 
-const SORT_OPTIONS = ['popular', 'newest', 'priceAsc', 'priceDesc'] as const
+const SORT_OPTIONS = ['newest', 'priceAsc', 'priceDesc'] as const
 type SortOption = (typeof SORT_OPTIONS)[number]
-
-function RatingStars({ rating, reviews }: { rating: number; reviews: number }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-0.5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star
-            key={i}
-            size={12}
-            strokeWidth={1.5}
-            className={i < Math.round(rating) ? 'fill-black text-black' : 'text-black/15'}
-          />
-        ))}
-      </div>
-      <span className="text-xs text-black/40">
-        {rating.toFixed(1)} ({reviews})
-      </span>
-    </div>
-  )
-}
 
 function AssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
   const { items, addToCart } = useCart()
-  const Icon = asset.kind === 'model' ? Box : Image
   const inCart = items.some((item) => item.id === asset.id)
 
   return (
     <div className="rounded-none border border-black bg-white p-4 flex flex-col">
-      <div className="relative rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4">
-        <Icon size={32} strokeWidth={1.5} className="text-black/30" />
-        <span className="absolute top-2 left-2 text-[10px] font-medium text-black/50 uppercase tracking-widest">
-          {asset.format}
-        </span>
+      <div className="relative rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
+        {asset.image_url ? (
+          <img src={asset.image_url} alt={asset.title} className="w-full h-full object-cover" />
+        ) : (
+          <ImageOff size={32} strokeWidth={1.5} className="text-black/30" />
+        )}
       </div>
 
       <span className="text-[10px] font-medium text-[#0000FF] uppercase tracking-widest mb-1">
-        {t(`marketplace.categories.${asset.category_key}`)}
+        {t(`marketplace.styles.${asset.style}`)}
       </span>
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-2">
-        {t('marketplace.by')} {asset.author}
+      <span className="text-xs text-black/50 mb-4">
+        {t('marketplace.by')} {asset.author_name}
       </span>
-      <div className="mb-4">
-        <RatingStars rating={asset.rating} reviews={asset.reviews} />
-      </div>
 
       <div className="flex items-center justify-between mt-auto">
         <span className="text-sm font-semibold text-black">${asset.price.toFixed(2)}</span>
@@ -78,9 +54,8 @@ export default function Marketplace() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeStyle, setActiveStyle] = useState<string>('all')
-  const [activeCategory, setActiveCategory] = useState<string>('all')
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<SortOption>('popular')
+  const [sort, setSort] = useState<SortOption>('newest')
 
   useEffect(() => {
     const fetchAssets = async () => {
@@ -101,18 +76,14 @@ export default function Marketplace() {
     let result = assets
 
     if (activeStyle !== 'all') {
-      result = result.filter((asset) => asset.style_key === activeStyle)
-    }
-
-    if (activeCategory !== 'all') {
-      result = result.filter((asset) => asset.category_key === activeCategory)
+      result = result.filter((asset) => asset.style === activeStyle)
     }
 
     if (query.trim() !== '') {
       const q = query.trim().toLowerCase()
       result = result.filter(
         (asset) =>
-          asset.title.toLowerCase().includes(q) || asset.author.toLowerCase().includes(q),
+          asset.title.toLowerCase().includes(q) || asset.author_name.toLowerCase().includes(q),
       )
     }
 
@@ -121,20 +92,18 @@ export default function Marketplace() {
       sorted.sort((a, b) => a.price - b.price)
     } else if (sort === 'priceDesc') {
       sorted.sort((a, b) => b.price - a.price)
-    } else if (sort === 'newest') {
-      sorted.sort((a, b) => b.id.localeCompare(a.id))
     } else {
-      sorted.sort((a, b) => b.reviews - a.reviews)
+      sorted.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
     }
 
     return sorted
-  }, [assets, activeStyle, activeCategory, query, sort])
+  }, [assets, activeStyle, query, sort])
 
   return (
     <div className="px-8 py-12">
       <div className="mb-8">
         <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-2 block">
-          {t(`marketplace.categories.${activeCategory}`)} / {t(`marketplace.styles.${activeStyle}`)}
+          {t(`marketplace.styles.${activeStyle}`)}
         </span>
         <h1 className="text-3xl font-bold tracking-tight text-black">{t('marketplace.title')}</h1>
       </div>
@@ -172,54 +141,28 @@ export default function Marketplace() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-10">
-        <aside className="md:w-52 flex-shrink-0 flex flex-col gap-8">
-          <div>
-            <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-3 block">
-              {t('marketplace.category')}
-            </span>
-            <nav className="flex flex-row md:flex-col gap-2 flex-wrap">
-              {CATEGORY_KEYS.map((category) => {
-                const isActive = category === activeCategory
-                return (
-                  <button
-                    key={category}
-                    onClick={() => setActiveCategory(category)}
-                    className={`rounded-none px-4 py-2 text-sm font-medium text-left transition-colors ${
-                      isActive
-                        ? 'bg-black text-white'
-                        : 'bg-white text-black border border-black/10 hover:border-black'
-                    }`}
-                  >
-                    {t(`marketplace.categories.${category}`)}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
-
-          <div>
-            <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-3 block">
-              {t('marketplace.visualStyle')}
-            </span>
-            <nav className="flex flex-row md:flex-col gap-2 flex-wrap">
-              {STYLE_KEYS.map((style) => {
-                const isActive = style === activeStyle
-                return (
-                  <button
-                    key={style}
-                    onClick={() => setActiveStyle(style)}
-                    className={`rounded-none px-4 py-2 text-sm font-medium text-left transition-colors ${
-                      isActive
-                        ? 'bg-black text-white'
-                        : 'bg-white text-black border border-black/10 hover:border-black'
-                    }`}
-                  >
-                    {t(`marketplace.styles.${style}`)}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
+        <aside className="md:w-52 flex-shrink-0">
+          <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-3 block">
+            {t('marketplace.visualStyle')}
+          </span>
+          <nav className="flex flex-row md:flex-col gap-2 flex-wrap">
+            {STYLE_KEYS.map((style) => {
+              const isActive = style === activeStyle
+              return (
+                <button
+                  key={style}
+                  onClick={() => setActiveStyle(style)}
+                  className={`rounded-none px-4 py-2 text-sm font-medium text-left transition-colors ${
+                    isActive
+                      ? 'bg-black text-white'
+                      : 'bg-white text-black border border-black/10 hover:border-black'
+                  }`}
+                >
+                  {t(`marketplace.styles.${style}`)}
+                </button>
+              )
+            })}
+          </nav>
         </aside>
 
         <div className="flex-1">

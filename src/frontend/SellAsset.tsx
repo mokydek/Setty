@@ -33,9 +33,9 @@ export default function SellAsset() {
     const { error: insertError } = await supabase.from('assets').insert([
       {
         title,
-        author,
+        author_name: author,
         price: parseFloat(price),
-        style_key: style,
+        style,
         image_url: imageUrl,
         seller_id: user.id,
       },

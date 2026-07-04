@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Box, Image, Download } from 'lucide-react'
+import { Download, ImageOff } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
@@ -7,14 +7,11 @@ import { supabase } from '../backend/supabase'
 interface Asset {
   id: string
   title: string
-  author: string
+  author_name: string
   price: number
-  style_key: string
-  category_key: string
-  format: string
-  kind: 'model' | 'sprite'
-  rating: number
-  reviews: number
+  style: string
+  image_url: string
+  seller_id: string
 }
 
 interface Purchase {
@@ -39,16 +36,19 @@ type Tab = 'assets' | 'bounties'
 
 function OwnedAssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
-  const Icon = asset.kind === 'model' ? Box : Image
 
   return (
     <div className="rounded-none border border-black bg-white p-4 flex flex-col">
-      <div className="rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4">
-        <Icon size={32} strokeWidth={1.5} className="text-black/30" />
+      <div className="rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
+        {asset.image_url ? (
+          <img src={asset.image_url} alt={asset.title} className="w-full h-full object-cover" />
+        ) : (
+          <ImageOff size={32} strokeWidth={1.5} className="text-black/30" />
+        )}
       </div>
 
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-4">{asset.author}</span>
+      <span className="text-xs text-black/50 mb-4">{asset.author_name}</span>
 
       <button className="rounded-none bg-[#0000FF] text-white px-3 py-2 flex items-center justify-center gap-2 text-xs font-medium hover:bg-black transition-colors mt-auto">
         <Download size={14} strokeWidth={1.5} />

@@ -3,14 +3,11 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 export interface CartItem {
   id: string
   title: string
-  author: string
+  author_name: string
   price: number
-  style_key: string
-  category_key: string
-  format: string
-  kind: 'model' | 'sprite'
-  rating: number
-  reviews: number
+  style: string
+  image_url: string
+  seller_id: string
 }
 
 interface CartContextValue {
