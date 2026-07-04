@@ -1,6 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingCart, Search, ChevronDown, Check, ImageOff, Heart } from 'lucide-react'
+import {
+  ShoppingCart,
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  ImageOff,
+  Heart,
+} from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
 import { useCart } from '../contexts/CartContext'
@@ -12,6 +21,8 @@ const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] a
 
 const SORT_OPTIONS = ['newest', 'priceAsc', 'priceDesc'] as const
 type SortOption = (typeof SORT_OPTIONS)[number]
+
+const PAGE_SIZE = 12
 
 function AssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
@@ -82,52 +93,63 @@ function AssetCard({ asset }: { asset: Asset }) {
 export default function Marketplace() {
   const { t } = useLanguage()
   const [assets, setAssets] = useState<Asset[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [activeStyle, setActiveStyle] = useState<string>('all')
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [sort, setSort] = useState<SortOption>('newest')
+  const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(query.trim()), 300)
+    return () => clearTimeout(timeout)
+  }, [query])
+
+  useEffect(() => {
+    setPage(1)
+  }, [activeStyle, debouncedQuery, sort])
 
   useEffect(() => {
     const fetchAssets = async () => {
       setIsLoading(true)
-      const { data, error } = await supabase.from('assets').select('*')
+
+      let request = supabase.from('assets').select('*', { count: 'exact' })
+
+      if (activeStyle !== 'all') {
+        request = request.eq('style', activeStyle)
+      }
+
+      if (debouncedQuery !== '') {
+        request = request.or(`title.ilike.%${debouncedQuery}%,author_name.ilike.%${debouncedQuery}%`)
+      }
+
+      if (sort === 'priceAsc') {
+        request = request.order('price', { ascending: true })
+      } else if (sort === 'priceDesc') {
+        request = request.order('price', { ascending: false })
+      } else {
+        request = request.order('created_at', { ascending: false })
+      }
+
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      request = request.range(from, to)
+
+      const { data, error, count } = await request
 
       if (!error && data) {
         setAssets(data as Asset[])
+        setTotalCount(count ?? 0)
       }
 
       setIsLoading(false)
     }
 
     fetchAssets()
-  }, [])
+  }, [activeStyle, debouncedQuery, sort, page])
 
-  const filteredAssets = useMemo(() => {
-    let result = assets
-
-    if (activeStyle !== 'all') {
-      result = result.filter((asset) => asset.style === activeStyle)
-    }
-
-    if (query.trim() !== '') {
-      const q = query.trim().toLowerCase()
-      result = result.filter(
-        (asset) =>
-          asset.title.toLowerCase().includes(q) || asset.author_name.toLowerCase().includes(q),
-      )
-    }
-
-    const sorted = [...result]
-    if (sort === 'priceAsc') {
-      sorted.sort((a, b) => a.price - b.price)
-    } else if (sort === 'priceDesc') {
-      sorted.sort((a, b) => b.price - a.price)
-    } else {
-      sorted.sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
-    }
-
-    return sorted
-  }, [assets, activeStyle, query, sort])
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   return (
     <div className="px-8 py-12">
@@ -198,7 +220,7 @@ export default function Marketplace() {
         <div className="flex-1">
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm text-black/40">
-              {filteredAssets.length} {t('marketplace.results')}
+              {totalCount} {t('marketplace.results')}
             </span>
           </div>
 
@@ -206,12 +228,40 @@ export default function Marketplace() {
             <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
               <span className="text-sm font-medium text-black/40">Loading assets...</span>
             </div>
-          ) : filteredAssets.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredAssets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
-              ))}
-            </div>
+          ) : assets.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+                {assets.map((asset) => (
+                  <AssetCard key={asset.id} asset={asset} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6">
+                  <button
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="rounded-none border border-black text-black px-4 py-2 flex items-center gap-2 text-sm font-medium hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronLeft size={14} strokeWidth={1.5} />
+                    Previous
+                  </button>
+
+                  <span className="text-sm text-black/40">
+                    Page {page} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page === totalPages}
+                    className="rounded-none border border-black text-black px-4 py-2 flex items-center gap-2 text-sm font-medium hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    Next
+                    <ChevronRight size={14} strokeWidth={1.5} />
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
               <span className="text-sm font-medium text-black/40">{t('marketplace.noResults')}</span>
