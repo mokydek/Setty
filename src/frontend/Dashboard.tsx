@@ -1,41 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Image, Download } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../backend/supabase'
 
-interface OwnedAsset {
-  id: number
+interface Asset {
+  id: string
   title: string
   author: string
+  price: number
+  style_key: string
+  category_key: string
+  format: string
   kind: 'model' | 'sprite'
+  rating: number
+  reviews: number
 }
 
-interface MyBounty {
-  id: number
+interface Purchase {
+  id: string
+  created_at: string
+  user_id: string
+  asset_id: string
+  assets: Asset
+}
+
+interface Bounty {
+  id: string
   title: string
-  status: 'inProgress' | 'completed'
+  description: string
+  style_key: string
+  reward: number
+  status: string
+  user_id: string
 }
 
 type Tab = 'assets' | 'bounties'
 
-const OWNED_ASSETS: OwnedAsset[] = [
-  { id: 1, title: 'Voxel Forest Pack', author: 'Mira Voss', kind: 'model' },
-  { id: 2, title: 'Neon Alley Tileset', author: 'Kaito Renn', kind: 'sprite' },
-  { id: 3, title: 'Hand Drawn Foliage', author: 'Elin Marsh', kind: 'sprite' },
-  { id: 4, title: 'Photoreal Rock Set', author: 'Dorian Kell', kind: 'model' },
-  { id: 5, title: 'Low Poly Vehicle Set', author: 'Sana Ito', kind: 'model' },
-  { id: 6, title: 'Cyberpunk HUD Icons', author: 'Kaito Renn', kind: 'sprite' },
-  { id: 7, title: 'Painted Sky Backdrops', author: 'Elin Marsh', kind: 'sprite' },
-  { id: 8, title: 'Realistic Foliage Scan', author: 'Sana Ito', kind: 'model' },
-]
-
-const MY_BOUNTIES: MyBounty[] = [
-  { id: 1, title: 'Low Poly Watchtower', status: 'inProgress' },
-  { id: 2, title: 'Cyberpunk Vending Machine', status: 'completed' },
-  { id: 3, title: 'Hand Painted Bridge Tile', status: 'inProgress' },
-  { id: 4, title: 'Realistic Barrel Cluster', status: 'completed' },
-]
-
-function OwnedAssetCard({ asset }: { asset: OwnedAsset }) {
+function OwnedAssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
   const Icon = asset.kind === 'model' ? Box : Image
 
@@ -56,8 +58,9 @@ function OwnedAssetCard({ asset }: { asset: OwnedAsset }) {
   )
 }
 
-function MyBountyRow({ bounty }: { bounty: MyBounty }) {
+function MyBountyRow({ bounty, onMarkDone }: { bounty: Bounty; onMarkDone: (id: string) => void }) {
   const { t } = useLanguage()
+  const isCompleted = bounty.status === 'completed'
 
   return (
     <div className="rounded-none border border-black bg-white p-6 flex items-center justify-between gap-4">
@@ -66,14 +69,17 @@ function MyBountyRow({ bounty }: { bounty: MyBounty }) {
       <div className="flex items-center gap-6">
         <span
           className={`text-xs font-medium uppercase tracking-widest ${
-            bounty.status === 'completed' ? 'text-black' : 'text-black/40'
+            isCompleted ? 'text-black' : 'text-black/40'
           }`}
         >
-          {bounty.status === 'completed' ? t('dashboard.statusCompleted') : t('dashboard.statusInProgress')}
+          {isCompleted ? t('dashboard.statusCompleted') : t('dashboard.statusInProgress')}
         </span>
 
-        <button className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors">
-          {bounty.status === 'completed' ? t('dashboard.viewFiles') : t('dashboard.markDone')}
+        <button
+          onClick={() => !isCompleted && onMarkDone(bounty.id)}
+          className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors"
+        >
+          {isCompleted ? t('dashboard.viewFiles') : t('dashboard.markDone')}
         </button>
       </div>
     </div>
@@ -82,7 +88,57 @@ function MyBountyRow({ bounty }: { bounty: MyBounty }) {
 
 export default function Dashboard() {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const [tab, setTab] = useState<Tab>('assets')
+  const [ownedAssets, setOwnedAssets] = useState<Asset[]>([])
+  const [myBounties, setMyBounties] = useState<Bounty[]>([])
+  const [assetsLoading, setAssetsLoading] = useState(true)
+  const [bountiesLoading, setBountiesLoading] = useState(true)
+
+  const fetchOwnedAssets = async () => {
+    if (!user) return
+    setAssetsLoading(true)
+
+    const { data, error } = await supabase
+      .from('purchases')
+      .select('*, assets(*)')
+      .eq('user_id', user.id)
+
+    if (!error && data) {
+      setOwnedAssets((data as Purchase[]).map((purchase) => purchase.assets))
+    }
+
+    setAssetsLoading(false)
+  }
+
+  const fetchMyBounties = async () => {
+    if (!user) return
+    setBountiesLoading(true)
+
+    const { data, error } = await supabase.from('bounties').select('*').eq('user_id', user.id)
+
+    if (!error && data) {
+      setMyBounties(data as Bounty[])
+    }
+
+    setBountiesLoading(false)
+  }
+
+  useEffect(() => {
+    fetchOwnedAssets()
+    fetchMyBounties()
+  }, [user])
+
+  const handleMarkDone = async (bountyId: string) => {
+    const { error } = await supabase
+      .from('bounties')
+      .update({ status: 'completed' })
+      .eq('id', bountyId)
+
+    if (!error) {
+      await fetchMyBounties()
+    }
+  }
 
   return (
     <div className="px-8 py-12">
@@ -113,21 +169,31 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {tab === 'assets' && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {OWNED_ASSETS.map((asset) => (
-            <OwnedAssetCard key={asset.id} asset={asset} />
-          ))}
-        </div>
-      )}
+      {tab === 'assets' &&
+        (assetsLoading ? (
+          <span className="text-sm font-medium text-black/40">Loading assets...</span>
+        ) : ownedAssets.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {ownedAssets.map((asset) => (
+              <OwnedAssetCard key={asset.id} asset={asset} />
+            ))}
+          </div>
+        ) : (
+          <span className="text-sm font-medium text-black">No assets purchased yet.</span>
+        ))}
 
-      {tab === 'bounties' && (
-        <div className="flex flex-col gap-4">
-          {MY_BOUNTIES.map((bounty) => (
-            <MyBountyRow key={bounty.id} bounty={bounty} />
-          ))}
-        </div>
-      )}
+      {tab === 'bounties' &&
+        (bountiesLoading ? (
+          <span className="text-sm font-medium text-black/40">Loading bounties...</span>
+        ) : myBounties.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            {myBounties.map((bounty) => (
+              <MyBountyRow key={bounty.id} bounty={bounty} onMarkDone={handleMarkDone} />
+            ))}
+          </div>
+        ) : (
+          <span className="text-sm font-medium text-black">No bounties posted yet.</span>
+        ))}
     </div>
   )
 }

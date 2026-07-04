@@ -15,7 +15,7 @@ interface Bounty {
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
-function BountyCard({ bounty }: { bounty: Bounty }) {
+function BountyCard({ bounty, onAccept }: { bounty: Bounty; onAccept: (id: string) => void }) {
   const { t } = useLanguage()
 
   return (
@@ -31,7 +31,10 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
 
       <div className="flex items-center justify-between mt-auto pt-2">
         <span className="text-lg font-semibold text-[#0000FF]">${bounty.reward.toFixed(2)}</span>
-        <button className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-[#0000FF] hover:text-white hover:border-[#0000FF] transition-colors">
+        <button
+          onClick={() => onAccept(bounty.id)}
+          className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-[#0000FF] hover:text-white hover:border-[#0000FF] transition-colors"
+        >
           {t('bounties.acceptTask')}
         </button>
       </div>
@@ -100,6 +103,17 @@ export default function Bounties() {
     setStyle(STYLE_KEYS[0])
     setReward('')
     await fetchBounties()
+  }
+
+  const handleAccept = async (bountyId: string) => {
+    const { error } = await supabase
+      .from('bounties')
+      .update({ status: 'in_progress' })
+      .eq('id', bountyId)
+
+    if (!error) {
+      await fetchBounties()
+    }
   }
 
   return (
@@ -207,7 +221,7 @@ export default function Bounties() {
           ) : bounties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {bounties.map((bounty) => (
-                <BountyCard key={bounty.id} bounty={bounty} />
+                <BountyCard key={bounty.id} bounty={bounty} onAccept={handleAccept} />
               ))}
             </div>
           ) : (
