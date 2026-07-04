@@ -18,10 +18,12 @@ export default function SellAsset() {
   const [author, setAuthor] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
+    setMessage(null)
 
     if (!user) {
       setError('You must be signed in to publish an asset.')
@@ -30,25 +32,41 @@ export default function SellAsset() {
 
     setIsPublishing(true)
 
-    const { error: insertError } = await supabase.from('assets').insert([
-      {
-        title,
-        author_name: author,
-        price: parseFloat(price),
-        style,
-        image_url: imageUrl,
-        seller_id: user.id,
-      },
-    ])
+    const { data, error: insertError } = await supabase
+      .from('assets')
+      .insert([
+        {
+          title,
+          author_name: author,
+          price: parseFloat(price),
+          style,
+          image_url: imageUrl,
+          seller_id: user.id,
+        },
+      ])
+      .select()
 
     setIsPublishing(false)
+    console.log('[SellAsset] insert response:', { data, error: insertError })
 
     if (insertError) {
       setError(insertError.message)
       return
     }
 
-    navigate('/app')
+    if (!data || data.length === 0) {
+      setError(
+        'The asset was submitted but nothing was returned by the database. This usually means a SELECT policy is missing on the assets table, so the row may exist but cannot be read back.',
+      )
+      return
+    }
+
+    setMessage('Опубликовано.')
+    setTitle('')
+    setAuthor('')
+    setStyle(STYLE_KEYS[0])
+    setPrice('')
+    setImageUrl('')
   }
 
   return (
@@ -58,6 +76,19 @@ export default function SellAsset() {
         <p className="text-sm text-black/60 mb-8">
           Publish a single asset to the Setty marketplace.
         </p>
+
+        {message && (
+          <div className="rounded-none border border-black bg-white px-4 py-3 mb-6 flex items-center justify-between gap-4">
+            <span className="text-sm font-medium text-black">{message}</span>
+            <button
+              type="button"
+              onClick={() => navigate('/app')}
+              className="text-sm font-semibold text-[#0000FF] hover:text-black transition-colors whitespace-nowrap"
+            >
+              View Marketplace
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="rounded-none border border-red-600 bg-white px-4 py-3 mb-6">
