@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Search, ChevronDown, Check, ImageOff } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
 import { useCart, type CartItem } from '../contexts/CartContext'
 
-type Asset = CartItem & { created_at?: string }
+type Asset = CartItem & { created_at?: string; description?: string }
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
@@ -14,10 +15,14 @@ type SortOption = (typeof SORT_OPTIONS)[number]
 function AssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
   const { items, addToCart } = useCart()
+  const navigate = useNavigate()
   const inCart = items.some((item) => item.id === asset.id)
 
   return (
-    <div className="rounded-none border border-black bg-white p-4 flex flex-col">
+    <div
+      onClick={() => navigate(`/asset/${asset.id}`)}
+      className="rounded-none border border-black bg-white p-4 flex flex-col cursor-pointer"
+    >
       <div className="relative rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
         {asset.image_url ? (
           <img src={asset.image_url} alt={asset.title} className="w-full h-full object-cover" />
@@ -37,7 +42,10 @@ function AssetCard({ asset }: { asset: Asset }) {
       <div className="flex items-center justify-between mt-auto">
         <span className="text-sm font-semibold text-black">${asset.price.toFixed(2)}</span>
         <button
-          onClick={() => addToCart(asset)}
+          onClick={(event) => {
+            event.stopPropagation()
+            addToCart(asset)
+          }}
           disabled={inCart}
           className="rounded-none border border-black bg-black text-white px-3 py-2 flex items-center gap-2 text-xs font-medium hover:bg-white hover:text-black transition-colors disabled:opacity-50"
         >

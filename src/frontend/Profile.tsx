@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { UserRound } from 'lucide-react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { UserRound, Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 
@@ -12,12 +12,14 @@ interface ProfileRow {
 
 export default function Profile() {
   const { user } = useAuth()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [nickname, setNickname] = useState('')
   const [description, setDescription] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -44,6 +46,31 @@ export default function Profile() {
 
     fetchProfile()
   }, [user])
+
+  const handleAvatarFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !user) return
+
+    setError(null)
+    setMessage(null)
+    setIsUploading(true)
+
+    const filePath = `${user.id}/${Date.now()}-${file.name}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true })
+
+    if (uploadError) {
+      setIsUploading(false)
+      setError(uploadError.message)
+      return
+    }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
+    setAvatarUrl(data.publicUrl)
+    setIsUploading(false)
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -87,12 +114,33 @@ export default function Profile() {
         <h1 className="text-3xl font-bold tracking-tight text-black mb-2">Profile</h1>
         <p className="text-sm text-black/60 mb-8">Manage your public creator profile.</p>
 
-        <div className="rounded-none border border-black bg-gray-100 w-24 h-24 flex items-center justify-center overflow-hidden mb-8">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={nickname} className="w-full h-full object-cover" />
-          ) : (
-            <UserRound size={32} strokeWidth={1.5} className="text-black/30" />
-          )}
+        <div className="flex items-center gap-6 mb-8">
+          <div className="rounded-none border border-black bg-gray-100 w-24 h-24 flex items-center justify-center overflow-hidden shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={nickname} className="w-full h-full object-cover" />
+            ) : (
+              <UserRound size={32} strokeWidth={1.5} className="text-black/30" />
+            )}
+          </div>
+
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarFileChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="rounded-none border border-black px-4 py-2 flex items-center gap-2 text-sm font-medium text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+            >
+              <Upload size={14} strokeWidth={1.5} />
+              {isUploading ? 'Uploading...' : 'Upload Avatar'}
+            </button>
+          </div>
         </div>
 
         {message && (

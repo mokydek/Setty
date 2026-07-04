@@ -12,6 +12,8 @@ import Dashboard from './frontend/Dashboard'
 import Cart from './frontend/Cart'
 import SellAsset from './frontend/SellAsset'
 import Profile from './frontend/Profile'
+import PublicProfile from './frontend/PublicProfile'
+import AssetDetail from './frontend/AssetDetail'
 
 export default function App() {
   return (
@@ -57,6 +59,8 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/profile/:id" element={<PublicProfile />} />
+                <Route path="/asset/:id" element={<AssetDetail />} />
               </Route>
             </Routes>
           </BrowserRouter>
