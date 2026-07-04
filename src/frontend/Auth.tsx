@@ -48,16 +48,28 @@ export default function Auth() {
     setLoading(true)
 
     if (mode === 'sign-in') {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      const result = await supabase.auth.signInWithPassword({ email, password })
+      console.log('[Auth] signInWithPassword response:', result)
+      const { error: authError } = result
       setLoading(false)
 
       if (authError) {
         setError(authError.message)
+        return
       }
+
+      // signInWithPassword awaits _notifyAllSubscribers('SIGNED_IN', ...)
+      // internally before resolving, so AuthContext's user is already
+      // updated by this point. Navigate directly; the effect above still
+      // covers OAuth and any other path that reaches this page with a
+      // session already established.
+      navigate('/dashboard', { replace: true })
       return
     }
 
-    const { data, error: authError } = await supabase.auth.signUp({ email, password })
+    const result = await supabase.auth.signUp({ email, password })
+    console.log('[Auth] signUp response:', result)
+    const { data, error: authError } = result
     setLoading(false)
 
     if (authError) {
@@ -66,6 +78,7 @@ export default function Auth() {
     }
 
     if (data.session) {
+      navigate('/dashboard', { replace: true })
       return
     }
 
