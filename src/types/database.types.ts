@@ -24,6 +24,7 @@ export interface Bounty {
   reward: number
   status: string
   user_id: string
+  assignee_id?: string | null
 }
 
 export interface Profile {

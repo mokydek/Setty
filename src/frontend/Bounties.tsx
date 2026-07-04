@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
@@ -36,6 +37,7 @@ function BountyCard({ bounty, onAccept }: { bounty: Bounty; onAccept: (id: strin
 export default function Bounties() {
   const { t } = useLanguage()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [bounties, setBounties] = useState<Bounty[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [title, setTitle] = useState('')
@@ -97,9 +99,14 @@ export default function Bounties() {
   }
 
   const handleAccept = async (bountyId: string) => {
+    if (!user) {
+      navigate('/auth')
+      return
+    }
+
     const { error } = await supabase
       .from('bounties')
-      .update({ status: 'in_progress' })
+      .update({ status: 'in_progress', assignee_id: user.id })
       .eq('id', bountyId)
 
     if (!error) {

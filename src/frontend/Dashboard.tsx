@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 import type { Asset, Bounty, Purchase } from '../types/database.types'
 
-type Tab = 'assets' | 'listings' | 'bounties'
+type Tab = 'assets' | 'listings' | 'bounties' | 'working'
 
 function OwnedAssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
@@ -123,6 +123,37 @@ function MyBountyRow({
   )
 }
 
+function WorkingOnBountyRow({ bounty, onMarkDone }: { bounty: Bounty; onMarkDone: (id: string) => void }) {
+  const { t } = useLanguage()
+  const isCompleted = bounty.status === 'completed'
+
+  return (
+    <div className="rounded-none border border-black bg-white p-6 flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-1">
+        <span className="text-sm font-bold text-black tracking-tight">{bounty.title}</span>
+        <span className="text-lg font-semibold text-[#0000FF]">${bounty.reward.toFixed(2)}</span>
+      </div>
+
+      <div className="flex items-center gap-6">
+        <span
+          className={`text-xs font-medium uppercase tracking-widest ${
+            isCompleted ? 'text-black' : 'text-black/40'
+          }`}
+        >
+          {isCompleted ? t('dashboard.statusCompleted') : t('dashboard.statusInProgress')}
+        </span>
+
+        <button
+          onClick={() => !isCompleted && onMarkDone(bounty.id)}
+          className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors"
+        >
+          {isCompleted ? t('dashboard.viewFiles') : t('dashboard.markDone')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { t } = useLanguage()
   const { user } = useAuth()
@@ -130,9 +161,11 @@ export default function Dashboard() {
   const [ownedAssets, setOwnedAssets] = useState<Asset[]>([])
   const [myListings, setMyListings] = useState<Asset[]>([])
   const [myBounties, setMyBounties] = useState<Bounty[]>([])
+  const [workingOnBounties, setWorkingOnBounties] = useState<Bounty[]>([])
   const [assetsLoading, setAssetsLoading] = useState(true)
   const [listingsLoading, setListingsLoading] = useState(true)
   const [bountiesLoading, setBountiesLoading] = useState(true)
+  const [workingOnLoading, setWorkingOnLoading] = useState(true)
 
   const fetchOwnedAssets = async () => {
     if (!user) return
@@ -176,10 +209,27 @@ export default function Dashboard() {
     setBountiesLoading(false)
   }
 
+  const fetchWorkingOnBounties = async () => {
+    if (!user) return
+    setWorkingOnLoading(true)
+
+    const { data, error } = await supabase
+      .from('bounties')
+      .select('*')
+      .eq('assignee_id', user.id)
+
+    if (!error && data) {
+      setWorkingOnBounties(data as Bounty[])
+    }
+
+    setWorkingOnLoading(false)
+  }
+
   useEffect(() => {
     fetchOwnedAssets()
     fetchMyListings()
     fetchMyBounties()
+    fetchWorkingOnBounties()
   }, [user])
 
   const handleMarkDone = async (bountyId: string) => {
@@ -190,6 +240,7 @@ export default function Dashboard() {
 
     if (!error) {
       await fetchMyBounties()
+      await fetchWorkingOnBounties()
     }
   }
 
@@ -249,6 +300,16 @@ export default function Dashboard() {
           >
             {t('dashboard.myBounties')}
           </button>
+          <button
+            onClick={() => setTab('working')}
+            className={`pb-3 text-sm transition-colors ${
+              tab === 'working'
+                ? 'border-b-2 border-black text-black font-bold'
+                : 'text-black/40 hover:text-black'
+            }`}
+          >
+            Working On
+          </button>
         </div>
       </div>
 
@@ -294,6 +355,21 @@ export default function Dashboard() {
           </div>
         ) : (
           <span className="text-sm font-medium text-black">No bounties posted yet.</span>
+        ))}
+
+      {tab === 'working' &&
+        (workingOnLoading ? (
+          <span className="text-sm font-medium text-black/40">Loading...</span>
+        ) : workingOnBounties.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            {workingOnBounties.map((bounty) => (
+              <WorkingOnBountyRow key={bounty.id} bounty={bounty} onMarkDone={handleMarkDone} />
+            ))}
+          </div>
+        ) : (
+          <span className="text-sm font-medium text-black">
+            You have not accepted any bounties yet.
+          </span>
         ))}
     </div>
   )
