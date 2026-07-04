@@ -11,6 +11,7 @@ import Bounties from './frontend/Bounties'
 import Dashboard from './frontend/Dashboard'
 import Cart from './frontend/Cart'
 import SellAsset from './frontend/SellAsset'
+import Profile from './frontend/Profile'
 
 export default function App() {
   return (
@@ -45,6 +46,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <SellAsset />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
                     </ProtectedRoute>
                   }
                 />

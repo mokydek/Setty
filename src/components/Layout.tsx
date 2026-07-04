@@ -223,6 +223,12 @@ export default function Layout() {
                   >
                     {t('nav.dashboard')}
                   </Link>
+                  <Link
+                    to="/profile"
+                    className="text-sm font-medium text-black hover:text-[#0000FF] transition-colors ml-2"
+                  >
+                    Profile
+                  </Link>
                   <button
                     onClick={handleSignOut}
                     className="rounded-none border border-black px-4 py-2 text-sm font-medium text-black hover:bg-black hover:text-white transition-colors ml-2"
@@ -253,6 +259,11 @@ export default function Layout() {
           {user && (
             <Link to="/dashboard" className="text-sm font-medium text-black hover:text-[#0000FF] transition-colors">
               {t('nav.dashboard')}
+            </Link>
+          )}
+          {user && (
+            <Link to="/profile" className="text-sm font-medium text-black hover:text-[#0000FF] transition-colors">
+              Profile
             </Link>
           )}
           <span className="w-px h-4 bg-gray-200" />
@@ -288,6 +299,11 @@ export default function Layout() {
             {user && (
               <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-sm font-medium text-black border-b border-gray-100">
                 {t('nav.dashboard')}
+              </Link>
+            )}
+            {user && (
+              <Link to="/profile" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-sm font-medium text-black border-b border-gray-100">
+                Profile
               </Link>
             )}
             {user ? (
