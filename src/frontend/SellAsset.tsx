@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
@@ -13,6 +14,7 @@ export default function SellAsset() {
   const { user } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState('')
   const [style, setStyle] = useState<string>(STYLE_KEYS[0])
@@ -20,8 +22,33 @@ export default function SellAsset() {
   const [imageUrl, setImageUrl] = useState('')
   const [author, setAuthor] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+
+  const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !user) return
+
+    setError(null)
+    setIsUploading(true)
+
+    const filePath = `${user.id}/${Date.now()}-${file.name}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('asset-images')
+      .upload(filePath, file, { upsert: true })
+
+    if (uploadError) {
+      setIsUploading(false)
+      setError(uploadError.message)
+      return
+    }
+
+    const { data } = supabase.storage.from('asset-images').getPublicUrl(filePath)
+    setImageUrl(data.publicUrl)
+    setIsUploading(false)
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -166,15 +193,33 @@ export default function SellAsset() {
             <label htmlFor="imageUrl" className="text-xs font-medium text-black/60">
               Image URL
             </label>
-            <input
-              id="imageUrl"
-              type="url"
-              required
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://"
-              className="rounded-none border border-black bg-white px-4 py-3 text-sm text-black outline-none focus:ring-0 focus:border-[#0000FF]"
-            />
+            <div className="flex gap-2">
+              <input
+                id="imageUrl"
+                type="url"
+                required
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://"
+                className="flex-1 rounded-none border border-black bg-white px-4 py-3 text-sm text-black outline-none focus:ring-0 focus:border-[#0000FF]"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="rounded-none border border-black px-4 py-3 flex items-center gap-2 text-sm font-medium text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                <Upload size={14} strokeWidth={1.5} />
+                {isUploading ? 'Uploading...' : 'Upload'}
+              </button>
+            </div>
           </div>
 
           <button
