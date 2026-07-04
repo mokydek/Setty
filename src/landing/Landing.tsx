@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Layers,
   ShoppingBag,
@@ -11,6 +11,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
 
 interface PreviewAsset {
   id: number
@@ -26,9 +27,6 @@ const PREVIEW_ASSETS: PreviewAsset[] = [
   { id: 3, title: 'Hand Drawn Foliage', styleKey: 'handPainted', price: '$3.25', kind: 'sprite' },
   { id: 4, title: 'Photoreal Rock Set', styleKey: 'realistic', price: '$9.00', kind: 'model' },
 ]
-
-const STAT_KEYS = ['assets', 'artists', 'matchRate', 'paidOut'] as const
-const STAT_VALUES = ['1,200+', '340+', '95%', '$180K+']
 
 const STEP_ICONS = [Search, Wallet, UploadCloud]
 const STEP_KEYS = ['browse', 'buy', 'bounty'] as const
@@ -53,6 +51,15 @@ function PreviewCard({ asset }: { asset: PreviewAsset }) {
 
 export default function Landing() {
   const { t } = useLanguage()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
+  const handlePostBounty = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) {
+      event.preventDefault()
+      navigate('/auth')
+    }
+  }
 
   return (
     <div className="bg-white">
@@ -72,25 +79,11 @@ export default function Landing() {
           </Link>
           <Link
             to="/bounties"
+            onClick={handlePostBounty}
             className="rounded-none border border-black text-black px-8 py-4 text-sm font-semibold hover:bg-black hover:text-white transition-colors w-full sm:w-auto text-center"
           >
             {t('landing.hero.postBounty')}
           </Link>
-        </div>
-      </section>
-
-      <section className="px-8 py-16 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {STAT_KEYS.map((key, index) => (
-            <div key={key} className="flex flex-col items-center text-center">
-              <span className="text-3xl md:text-4xl font-bold tracking-tight text-black mb-2">
-                {STAT_VALUES[index]}
-              </span>
-              <span className="text-xs text-black/50 uppercase tracking-widest">
-                {t(`landing.stats.${key}`)}
-              </span>
-            </div>
-          ))}
         </div>
       </section>
 

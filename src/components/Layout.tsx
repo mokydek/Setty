@@ -66,6 +66,13 @@ export default function Layout() {
     }
   }
 
+  const handlePostBountyClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) {
+      event.preventDefault()
+      navigate('/auth')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="sticky top-0 z-50 bg-white">
@@ -78,6 +85,13 @@ export default function Layout() {
               className="text-xs font-medium hover:text-[#0000FF] transition-colors"
             >
               {t('nav.sellOnSetty')}
+            </Link>
+            <Link
+              to="/bounties"
+              onClick={handlePostBountyClick}
+              className="text-xs font-medium hover:text-[#0000FF] transition-colors"
+            >
+              {t('landing.hero.postBounty')}
             </Link>
             <div className="flex items-center border border-white/30">
               <button
@@ -295,6 +309,26 @@ export default function Layout() {
             </Link>
             <Link to="/bounties" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-sm font-medium text-black border-b border-gray-100">
               {t('nav.bounties')}
+            </Link>
+            <Link
+              to="/sell"
+              onClick={(event) => {
+                handleSellClick(event)
+                setMobileOpen(false)
+              }}
+              className="px-3 py-3 text-sm font-medium text-black border-b border-gray-100"
+            >
+              {t('nav.sellOnSetty')}
+            </Link>
+            <Link
+              to="/bounties"
+              onClick={(event) => {
+                handlePostBountyClick(event)
+                setMobileOpen(false)
+              }}
+              className="px-3 py-3 text-sm font-medium text-black border-b border-gray-100"
+            >
+              {t('landing.hero.postBounty')}
             </Link>
             {user && (
               <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="px-3 py-3 text-sm font-medium text-black border-b border-gray-100">
