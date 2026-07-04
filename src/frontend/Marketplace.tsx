@@ -15,6 +15,7 @@ function AssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
   const { items, addToCart } = useCart()
   const navigate = useNavigate()
+  const [imageFailed, setImageFailed] = useState(false)
   const inCart = items.some((item) => item.id === asset.id)
 
   return (
@@ -23,8 +24,13 @@ function AssetCard({ asset }: { asset: Asset }) {
       className="rounded-none border border-black bg-white p-4 flex flex-col cursor-pointer"
     >
       <div className="relative rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
-        {asset.image_url ? (
-          <img src={asset.image_url} alt={asset.title} className="w-full h-full object-cover" />
+        {asset.image_url && !imageFailed ? (
+          <img
+            src={asset.image_url}
+            alt={asset.title}
+            onError={() => setImageFailed(true)}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <ImageOff size={32} strokeWidth={1.5} className="text-black/30" />
         )}

@@ -18,6 +18,8 @@ export default function AssetDetail() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [imageFailed, setImageFailed] = useState(false)
+  const [alreadyOwned, setAlreadyOwned] = useState(false)
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -41,6 +43,28 @@ export default function AssetDetail() {
 
     fetchAsset()
   }, [id])
+
+  useEffect(() => {
+    const checkOwnership = async () => {
+      if (!id || !user) {
+        setAlreadyOwned(false)
+        return
+      }
+
+      const { data } = await supabase
+        .from('purchases')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('asset_id', id)
+        .maybeSingle()
+
+      setAlreadyOwned(!!data)
+    }
+
+    checkOwnership()
+  }, [id, user])
+
+  const isOwnListing = !!user && !!asset && user.id === asset.seller_id
 
   const handleBuy = () => {
     if (!asset) return
@@ -74,6 +98,7 @@ export default function AssetDetail() {
       return
     }
 
+    setAlreadyOwned(true)
     setMessage('Added to your assets.')
   }
 
@@ -97,8 +122,13 @@ export default function AssetDetail() {
     <div className="px-8 py-12">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
         <div className="rounded-none border border-black bg-gray-100 aspect-square flex items-center justify-center overflow-hidden">
-          {asset.image_url ? (
-            <img src={asset.image_url} alt={asset.title} className="w-full h-full object-cover" />
+          {asset.image_url && !imageFailed ? (
+            <img
+              src={asset.image_url}
+              alt={asset.title}
+              onError={() => setImageFailed(true)}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <ImageOff size={48} strokeWidth={1.5} className="text-black/30" />
           )}
@@ -135,7 +165,16 @@ export default function AssetDetail() {
               {asset.price > 0 ? `$${asset.price.toFixed(2)}` : 'Free'}
             </span>
 
-            {asset.price > 0 ? (
+            {isOwnListing ? (
+              <span className="text-sm font-medium text-black/40">This is your own listing</span>
+            ) : alreadyOwned ? (
+              <Link
+                to="/dashboard"
+                className="rounded-none border border-black text-black px-6 py-3 text-sm font-semibold hover:bg-black hover:text-white transition-colors"
+              >
+                Already owned
+              </Link>
+            ) : asset.price > 0 ? (
               <button
                 onClick={handleBuy}
                 className="rounded-none bg-[#0000FF] text-white px-6 py-3 flex items-center gap-2 text-sm font-semibold hover:bg-black transition-colors"

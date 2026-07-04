@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Asset } from '../types/database.types'
 
 export type CartItem = Asset
@@ -13,8 +13,25 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null)
 
+const STORAGE_KEY = 'setty-cart'
+
+function loadStoredItems(): CartItem[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as CartItem[]) : []
+  } catch {
+    return []
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [items, setItems] = useState<CartItem[]>(loadStoredItems)
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+  }, [items])
 
   const addToCart = (asset: CartItem) => {
     setItems((prev) => (prev.some((item) => item.id === asset.id) ? prev : [...prev, asset]))

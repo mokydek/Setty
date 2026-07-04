@@ -14,6 +14,7 @@ import SellAsset from './frontend/SellAsset'
 import Profile from './frontend/Profile'
 import PublicProfile from './frontend/PublicProfile'
 import AssetDetail from './frontend/AssetDetail'
+import NotFound from './frontend/NotFound'
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
                 />
                 <Route path="/profile/:id" element={<PublicProfile />} />
                 <Route path="/asset/:id" element={<AssetDetail />} />
+                <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
           </BrowserRouter>

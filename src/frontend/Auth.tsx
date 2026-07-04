@@ -20,6 +20,8 @@ export default function Auth() {
   const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [showResend, setShowResend] = useState(false)
+  const [isResending, setIsResending] = useState(false)
 
   // AuthContext updates `user` asynchronously via onAuthStateChange, which can
   // land a tick after signIn/signUp resolves. Navigating from this effect
@@ -45,6 +47,7 @@ export default function Auth() {
     event.preventDefault()
     setError(null)
     setMessage(null)
+    setShowResend(false)
     setLoading(true)
 
     if (mode === 'sign-in') {
@@ -55,6 +58,9 @@ export default function Auth() {
 
       if (authError) {
         setError(authError.message)
+        if (authError.message.toLowerCase().includes('email not confirmed')) {
+          setShowResend(true)
+        }
         return
       }
 
@@ -84,6 +90,28 @@ export default function Auth() {
 
     setMessage('Registration successful. Please check your email or sign in.')
     setMode('sign-in')
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email) return
+    setError(null)
+    setMessage(null)
+    setIsResending(true)
+
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    })
+
+    setIsResending(false)
+
+    if (resendError) {
+      setError(resendError.message)
+      return
+    }
+
+    setShowResend(false)
+    setMessage('Confirmation email sent. Please check your inbox.')
   }
 
   const handleOAuthSignIn = async (provider: OAuthProvider) => {
@@ -123,8 +151,18 @@ export default function Auth() {
         )}
 
         {error && (
-          <div className="rounded-none border border-red-600 bg-white px-4 py-3 mb-6">
+          <div className="rounded-none border border-red-600 bg-white px-4 py-3 mb-6 flex items-center justify-between gap-4">
             <span className="text-sm font-medium text-red-600">{error}</span>
+            {showResend && (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={isResending}
+                className="text-sm font-semibold text-[#0000FF] hover:text-black transition-colors whitespace-nowrap disabled:opacity-50"
+              >
+                {isResending ? 'Sending...' : 'Resend email'}
+              </button>
+            )}
           </div>
         )}
 
