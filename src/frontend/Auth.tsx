@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GitBranch, Globe } from 'lucide-react'
 import { supabase } from '../backend/supabase'
 import { useLanguage } from '../i18n/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
 
 type OAuthProvider = 'github' | 'google'
 type AuthMode = 'sign-in' | 'sign-up'
@@ -10,6 +11,7 @@ type AuthMode = 'sign-in' | 'sign-up'
 export default function Auth() {
   const { t } = useLanguage()
   const navigate = useNavigate()
+  const { user, isLoading: isAuthLoading } = useAuth()
 
   const [mode, setMode] = useState<AuthMode>('sign-in')
   const [email, setEmail] = useState('')
@@ -18,6 +20,16 @@ export default function Auth() {
   const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+
+  // AuthContext updates `user` asynchronously via onAuthStateChange, which can
+  // land a tick after signIn/signUp resolves. Navigating from this effect
+  // (instead of right after the await) avoids racing ProtectedRoute, which
+  // would otherwise read a still-null user and bounce back to /auth.
+  useEffect(() => {
+    if (!isAuthLoading && user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, isAuthLoading, navigate])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -31,10 +43,7 @@ export default function Auth() {
 
       if (authError) {
         setError(authError.message)
-        return
       }
-
-      navigate('/dashboard')
       return
     }
 
@@ -47,7 +56,6 @@ export default function Auth() {
     }
 
     if (data.session) {
-      navigate('/dashboard')
       return
     }
 
