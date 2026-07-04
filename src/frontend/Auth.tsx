@@ -31,6 +31,16 @@ export default function Auth() {
     }
   }, [user, isAuthLoading, navigate])
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-full flex items-center justify-center px-8 py-24">
+        <span className="text-sm font-medium text-[#0000FF] tracking-widest uppercase">
+          Loading...
+        </span>
+      </div>
+    )
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
