@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 
 export default function Cart() {
-  const { items, removeFromCart, clearCart, cartTotal } = useCart()
+  const { items, removeFromCart, cartTotal } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [isCheckingOut, setIsCheckingOut] = useState(false)
@@ -25,22 +25,38 @@ export default function Cart() {
 
     setIsCheckingOut(true)
 
-    const { error: insertError } = await supabase.from('purchases').insert(
-      items.map((item) => ({
-        user_id: user.id,
-        asset_id: item.id,
-      })),
+    const results = await Promise.all(
+      items.map(async (item) => {
+        const { error: insertError } = await supabase
+          .from('purchases')
+          .insert([{ user_id: user.id, asset_id: item.id }])
+
+        return { item, error: insertError }
+      }),
     )
 
     setIsCheckingOut(false)
 
-    if (insertError) {
-      setError(insertError.message)
+    const failed = results.filter((result) => result.error)
+    const succeeded = results.filter((result) => !result.error)
+
+    succeeded.forEach((result) => removeFromCart(result.item.id))
+
+    if (failed.length === 0) {
+      navigate('/dashboard')
       return
     }
 
-    clearCart()
-    navigate('/dashboard')
+    if (succeeded.length === 0) {
+      setError(`Checkout failed: ${failed[0].error?.message}`)
+      return
+    }
+
+    setError(
+      `${succeeded.length} of ${results.length} items purchased. These items failed and remain in your cart: ${failed
+        .map((result) => result.item.title)
+        .join(', ')}.`,
+    )
   }
 
   return (
