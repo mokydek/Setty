@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
+import type { Asset } from '../types/database.types'
+
+type NewAsset = Omit<Asset, 'id' | 'created_at' | 'description'>
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
@@ -32,18 +35,18 @@ export default function SellAsset() {
 
     setIsPublishing(true)
 
+    const newAsset: NewAsset = {
+      title,
+      author_name: author,
+      price: parseFloat(price),
+      style,
+      image_url: imageUrl,
+      seller_id: user.id,
+    }
+
     const { data, error: insertError } = await supabase
       .from('assets')
-      .insert([
-        {
-          title,
-          author_name: author,
-          price: parseFloat(price),
-          style,
-          image_url: imageUrl,
-          seller_id: user.id,
-        },
-      ])
+      .insert([newAsset])
       .select()
 
     setIsPublishing(false)

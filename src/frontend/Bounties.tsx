@@ -2,16 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
-
-interface Bounty {
-  id: string
-  title: string
-  description: string
-  style: string
-  reward: number
-  status: string
-  user_id: string
-}
+import type { Bounty } from '../types/database.types'
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 

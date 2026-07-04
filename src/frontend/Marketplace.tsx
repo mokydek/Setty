@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Search, ChevronDown, Check, ImageOff } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
-import { useCart, type CartItem } from '../contexts/CartContext'
-
-type Asset = CartItem & { created_at?: string; description?: string }
+import { useCart } from '../contexts/CartContext'
+import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 

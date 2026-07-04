@@ -3,34 +3,7 @@ import { Download, ImageOff } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
-
-interface Asset {
-  id: string
-  title: string
-  author_name: string
-  price: number
-  style: string
-  image_url: string
-  seller_id: string
-}
-
-interface Purchase {
-  id: string
-  created_at: string
-  user_id: string
-  asset_id: string
-  assets: Asset
-}
-
-interface Bounty {
-  id: string
-  title: string
-  description: string
-  style: string
-  reward: number
-  status: string
-  user_id: string
-}
+import type { Asset, Bounty, Purchase } from '../types/database.types'
 
 type Tab = 'assets' | 'bounties'
 

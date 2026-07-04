@@ -1,14 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import type { Asset } from '../types/database.types'
 
-export interface CartItem {
-  id: string
-  title: string
-  author_name: string
-  price: number
-  style: string
-  image_url: string
-  seller_id: string
-}
+export type CartItem = Asset
 
 interface CartContextValue {
   items: CartItem[]

@@ -2,12 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ImageOff, ShoppingCart, Download } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useCart, type CartItem } from '../contexts/CartContext'
+import { useCart } from '../contexts/CartContext'
 import { supabase } from '../backend/supabase'
-
-interface Asset extends CartItem {
-  description?: string
-}
+import type { Asset } from '../types/database.types'
 
 export default function AssetDetail() {
   const { id } = useParams<{ id: string }>()
