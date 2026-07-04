@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingCart, Search, ChevronDown, Check, ImageOff } from 'lucide-react'
+import { ShoppingCart, Search, ChevronDown, Check, ImageOff, Heart } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
 import { useCart } from '../contexts/CartContext'
+import { useWishlist } from '../contexts/WishlistContext'
+import { useAuth } from '../contexts/AuthContext'
 import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -14,9 +16,12 @@ type SortOption = (typeof SORT_OPTIONS)[number]
 function AssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
   const { items, addToCart } = useCart()
+  const { user } = useAuth()
+  const { isWishlisted, toggleWishlist } = useWishlist()
   const navigate = useNavigate()
   const [imageFailed, setImageFailed] = useState(false)
   const inCart = items.some((item) => item.id === asset.id)
+  const wishlisted = isWishlisted(asset.id)
 
   return (
     <div
@@ -33,6 +38,18 @@ function AssetCard({ asset }: { asset: Asset }) {
           />
         ) : (
           <ImageOff size={32} strokeWidth={1.5} className="text-black/30" />
+        )}
+        {user && (
+          <button
+            onClick={(event) => {
+              event.stopPropagation()
+              toggleWishlist(asset.id)
+            }}
+            aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            className="absolute top-2 right-2 p-1.5 bg-white border border-black text-black hover:text-[#0000FF] transition-colors"
+          >
+            <Heart size={14} strokeWidth={1.5} className={wishlisted ? 'fill-[#0000FF] text-[#0000FF]' : ''} />
+          </button>
         )}
       </div>
 

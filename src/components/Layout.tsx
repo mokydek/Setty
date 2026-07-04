@@ -21,6 +21,7 @@ import {
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
+import { useWishlist } from '../contexts/WishlistContext'
 import { supabase } from '../backend/supabase'
 
 const CATEGORY_ICONS = [
@@ -42,6 +43,7 @@ export default function Layout() {
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
   const { items } = useCart()
+  const { assetIds: wishlistIds } = useWishlist()
   const navigate = useNavigate()
   const [browseOpen, setBrowseOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -200,11 +202,16 @@ export default function Layout() {
 
             <div className="hidden md:flex items-center gap-1 ml-auto">
               <Link
-                to="/dashboard"
+                to="/wishlist"
                 className="relative p-2.5 text-black hover:text-[#0000FF] transition-colors"
                 aria-label={t('nav.wishlist')}
               >
                 <Heart size={20} strokeWidth={1.5} />
+                {wishlistIds.length > 0 && (
+                  <span className="absolute top-1 right-1 rounded-none bg-[#0000FF] text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center">
+                    {wishlistIds.length}
+                  </span>
+                )}
               </Link>
 
               <Link

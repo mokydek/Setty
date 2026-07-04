@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ImageOff, ShoppingCart, Download } from 'lucide-react'
+import { ImageOff, ShoppingCart, Download, Heart } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
+import { useWishlist } from '../contexts/WishlistContext'
 import { supabase } from '../backend/supabase'
 import type { Asset } from '../types/database.types'
 
@@ -11,6 +12,7 @@ export default function AssetDetail() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { addToCart } = useCart()
+  const { isWishlisted, toggleWishlist } = useWishlist()
 
   const [asset, setAsset] = useState<Asset | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -135,7 +137,22 @@ export default function AssetDetail() {
         </div>
 
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold tracking-tight text-black mb-2">{asset.title}</h1>
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <h1 className="text-3xl font-bold tracking-tight text-black">{asset.title}</h1>
+            {user && (
+              <button
+                onClick={() => toggleWishlist(asset.id)}
+                aria-label={isWishlisted(asset.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                className="shrink-0 p-2 border border-black text-black hover:text-[#0000FF] transition-colors"
+              >
+                <Heart
+                  size={18}
+                  strokeWidth={1.5}
+                  className={isWishlisted(asset.id) ? 'fill-[#0000FF] text-[#0000FF]' : ''}
+                />
+              </button>
+            )}
+          </div>
 
           <Link
             to={`/profile/${asset.seller_id}`}
