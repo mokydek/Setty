@@ -1,20 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Image, ShoppingCart, Search, Star, ChevronDown } from 'lucide-react'
+import { Box, Image, ShoppingCart, Search, Star, ChevronDown, Check } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
+import { useCart, type CartItem } from '../contexts/CartContext'
 
-interface Asset {
-  id: string
-  title: string
-  author: string
-  price: number
-  style_key: string
-  category_key: string
-  format: string
-  kind: 'model' | 'sprite'
-  rating: number
-  reviews: number
-}
+type Asset = CartItem
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 const CATEGORY_KEYS = ['all', 'environment', 'character', 'prop', 'vfx', 'uiKit'] as const
@@ -44,7 +34,9 @@ function RatingStars({ rating, reviews }: { rating: number; reviews: number }) {
 
 function AssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
+  const { items, addToCart } = useCart()
   const Icon = asset.kind === 'model' ? Box : Image
+  const inCart = items.some((item) => item.id === asset.id)
 
   return (
     <div className="rounded-none border border-black bg-white p-4 flex flex-col">
@@ -68,9 +60,13 @@ function AssetCard({ asset }: { asset: Asset }) {
 
       <div className="flex items-center justify-between mt-auto">
         <span className="text-sm font-semibold text-black">${asset.price.toFixed(2)}</span>
-        <button className="rounded-none border border-black bg-black text-white px-3 py-2 flex items-center gap-2 text-xs font-medium hover:bg-white hover:text-black transition-colors">
-          <ShoppingCart size={14} strokeWidth={1.5} />
-          {t('marketplace.addToCart')}
+        <button
+          onClick={() => addToCart(asset)}
+          disabled={inCart}
+          className="rounded-none border border-black bg-black text-white px-3 py-2 flex items-center gap-2 text-xs font-medium hover:bg-white hover:text-black transition-colors disabled:opacity-50"
+        >
+          {inCart ? <Check size={14} strokeWidth={1.5} /> : <ShoppingCart size={14} strokeWidth={1.5} />}
+          {inCart ? 'In Cart' : t('marketplace.addToCart')}
         </button>
       </div>
     </div>

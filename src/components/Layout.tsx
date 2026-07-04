@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useCart } from '../contexts/CartContext'
 import { supabase } from '../backend/supabase'
 
 const CATEGORY_ICONS = [
@@ -40,6 +41,7 @@ const STYLE_ICONS = [
 export default function Layout() {
   const { language, setLanguage, t } = useLanguage()
   const { user } = useAuth()
+  const { items } = useCart()
   const navigate = useNavigate()
   const [browseOpen, setBrowseOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -181,14 +183,16 @@ export default function Layout() {
               </Link>
 
               <Link
-                to="/dashboard"
+                to="/cart"
                 className="relative p-2.5 text-black hover:text-[#0000FF] transition-colors"
                 aria-label={t('nav.cart')}
               >
                 <ShoppingCart size={20} strokeWidth={1.5} />
-                <span className="absolute top-1 right-1 rounded-none bg-[#0000FF] text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center">
-                  0
-                </span>
+                {items.length > 0 && (
+                  <span className="absolute top-1 right-1 rounded-none bg-[#0000FF] text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center">
+                    {items.length}
+                  </span>
+                )}
               </Link>
 
               {!user && (
