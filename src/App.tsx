@@ -10,6 +10,7 @@ import Auth from './frontend/Auth'
 import Bounties from './frontend/Bounties'
 import Dashboard from './frontend/Dashboard'
 import Cart from './frontend/Cart'
+import SellAsset from './frontend/SellAsset'
 
 export default function App() {
   return (
@@ -36,6 +37,14 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <Cart />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sell"
+                  element={
+                    <ProtectedRoute>
+                      <SellAsset />
                     </ProtectedRoute>
                   }
                 />

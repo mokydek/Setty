@@ -59,13 +59,24 @@ export default function Layout() {
     navigate('/')
   }
 
+  const handleSellClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!user) {
+      event.preventDefault()
+      navigate('/auth')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="sticky top-0 z-50 bg-white">
         <div className="hidden md:flex items-center justify-between border-b border-gray-200 bg-black text-white px-8 py-2">
           <span className="text-xs tracking-wide">{t('nav.tagline')}</span>
           <div className="flex items-center gap-6">
-            <Link to="/bounties" className="text-xs font-medium hover:text-[#0000FF] transition-colors">
+            <Link
+              to="/sell"
+              onClick={handleSellClick}
+              className="text-xs font-medium hover:text-[#0000FF] transition-colors"
+            >
               {t('nav.sellOnSetty')}
             </Link>
             <div className="flex items-center border border-white/30">
