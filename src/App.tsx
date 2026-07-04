@@ -14,6 +14,7 @@ import SellAsset from './frontend/SellAsset'
 import Profile from './frontend/Profile'
 import PublicProfile from './frontend/PublicProfile'
 import AssetDetail from './frontend/AssetDetail'
+import EditAsset from './frontend/EditAsset'
 import NotFound from './frontend/NotFound'
 
 export default function App() {
@@ -62,6 +63,14 @@ export default function App() {
                 />
                 <Route path="/profile/:id" element={<PublicProfile />} />
                 <Route path="/asset/:id" element={<AssetDetail />} />
+                <Route
+                  path="/edit-asset/:id"
+                  element={
+                    <ProtectedRoute>
+                      <EditAsset />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
