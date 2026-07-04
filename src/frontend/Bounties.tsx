@@ -1,53 +1,19 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../backend/supabase'
 
 interface Bounty {
-  id: number
+  id: string
   title: string
   description: string
-  styleKey: string
-  reward: string
+  style_key: string
+  reward: number
+  status: string
+  user_id: string
 }
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
-
-const BOUNTIES: Bounty[] = [
-  {
-    id: 1,
-    title: 'Low Poly Watchtower',
-    description: 'Need a modular watchtower with a ladder and lookout deck, matching a low poly forest set.',
-    styleKey: 'lowPoly',
-    reward: '$15.00',
-  },
-  {
-    id: 2,
-    title: 'Cyberpunk Vending Machine',
-    description: 'Single prop, neon trim, chrome body, to fit an existing alley tileset.',
-    styleKey: 'cyberpunk',
-    reward: '$12.50',
-  },
-  {
-    id: 3,
-    title: 'Hand Painted Bridge Tile',
-    description: 'A wooden rope bridge tile in a soft painted style, matching existing terrain art.',
-    styleKey: 'handPainted',
-    reward: '$9.00',
-  },
-  {
-    id: 4,
-    title: 'Realistic Barrel Cluster',
-    description: 'Photoreal wooden and metal barrels, scanned texture quality, for an industrial scene.',
-    styleKey: 'realistic',
-    reward: '$20.00',
-  },
-  {
-    id: 5,
-    title: 'Low Poly Market Stall',
-    description: 'A single market stall prop with awning, consistent with a low poly village kit.',
-    styleKey: 'lowPoly',
-    reward: '$11.25',
-  },
-]
 
 function BountyCard({ bounty }: { bounty: Bounty }) {
   const { t } = useLanguage()
@@ -57,14 +23,14 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
       <div className="flex items-start justify-between gap-4">
         <h3 className="text-lg font-bold tracking-tight text-black">{bounty.title}</h3>
         <span className="text-xs font-medium text-black/50 uppercase tracking-widest whitespace-nowrap pt-1">
-          {t(`marketplace.styles.${bounty.styleKey}`)}
+          {t(`marketplace.styles.${bounty.style_key}`)}
         </span>
       </div>
 
       <p className="text-sm text-black/60 leading-relaxed">{bounty.description}</p>
 
       <div className="flex items-center justify-between mt-auto pt-2">
-        <span className="text-lg font-semibold text-[#0000FF]">{bounty.reward}</span>
+        <span className="text-lg font-semibold text-[#0000FF]">${bounty.reward.toFixed(2)}</span>
         <button className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-[#0000FF] hover:text-white hover:border-[#0000FF] transition-colors">
           {t('bounties.acceptTask')}
         </button>
@@ -75,17 +41,65 @@ function BountyCard({ bounty }: { bounty: Bounty }) {
 
 export default function Bounties() {
   const { t } = useLanguage()
+  const { user } = useAuth()
+  const [bounties, setBounties] = useState<Bounty[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [style, setStyle] = useState<string>(STYLE_KEYS[0])
   const [reward, setReward] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const fetchBounties = async () => {
+    setIsLoading(true)
+    const { data, error } = await supabase.from('bounties').select('*').eq('status', 'open')
+
+    if (!error && data) {
+      setBounties(data as Bounty[])
+    }
+
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchBounties()
+  }, [])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    setFormError(null)
+
+    if (!user) {
+      setFormError('You must be signed in to post a bounty.')
+      return
+    }
+
+    setSubmitting(true)
+
+    const { error } = await supabase.from('bounties').insert([
+      {
+        title,
+        description,
+        style_key: style,
+        reward: parseFloat(reward),
+        status: 'open',
+        user_id: user.id,
+      },
+    ])
+
+    setSubmitting(false)
+
+    if (error) {
+      setFormError(error.message)
+      return
+    }
+
     setTitle('')
     setDescription('')
     setStyle(STYLE_KEYS[0])
     setReward('')
+    await fetchBounties()
   }
 
   return (
@@ -100,6 +114,12 @@ export default function Bounties() {
             <h2 className="text-xl font-bold tracking-tight text-black mb-6">
               {t('bounties.postTitle')}
             </h2>
+
+            {formError && (
+              <div className="rounded-none border border-red-600 bg-white px-4 py-3 mb-6">
+                <span className="text-sm font-medium text-red-600">{formError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
@@ -166,9 +186,10 @@ export default function Bounties() {
 
               <button
                 type="submit"
-                className="rounded-none bg-[#0000FF] text-white px-6 py-3 text-sm font-semibold hover:bg-black transition-colors mt-2"
+                disabled={submitting}
+                className="rounded-none bg-[#0000FF] text-white px-6 py-3 text-sm font-semibold hover:bg-black transition-colors mt-2 disabled:opacity-50"
               >
-                {t('bounties.publish')}
+                {submitting ? 'Publishing...' : t('bounties.publish')}
               </button>
             </form>
           </div>
@@ -178,11 +199,22 @@ export default function Bounties() {
           <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-4 block">
             {t('bounties.openBounties')}
           </span>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {BOUNTIES.map((bounty) => (
-              <BountyCard key={bounty.id} bounty={bounty} />
-            ))}
-          </div>
+
+          {isLoading ? (
+            <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
+              <span className="text-sm font-medium text-black/40">Loading bounties...</span>
+            </div>
+          ) : bounties.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {bounties.map((bounty) => (
+                <BountyCard key={bounty.id} bounty={bounty} />
+              ))}
+            </div>
+          ) : (
+            <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
+              <span className="text-sm font-medium text-black/40">No open bounties yet.</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,15 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Box, Image, ShoppingCart, Search, Star, ChevronDown } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
+import { supabase } from '../backend/supabase'
 
 interface Asset {
-  id: number
+  id: string
   title: string
   author: string
-  price: string
-  numericPrice: number
-  styleKey: string
-  categoryKey: string
+  price: number
+  style_key: string
+  category_key: string
   format: string
   kind: 'model' | 'sprite'
   rating: number
@@ -21,21 +21,6 @@ const CATEGORY_KEYS = ['all', 'environment', 'character', 'prop', 'vfx', 'uiKit'
 
 const SORT_OPTIONS = ['popular', 'newest', 'priceAsc', 'priceDesc'] as const
 type SortOption = (typeof SORT_OPTIONS)[number]
-
-const ASSETS: Asset[] = [
-  { id: 1, title: 'Voxel Forest Pack', author: 'Mira Voss', price: '$4.99', numericPrice: 4.99, styleKey: 'lowPoly', categoryKey: 'environment', format: 'Unity Package', kind: 'model', rating: 4.8, reviews: 214 },
-  { id: 2, title: 'Neon Alley Tileset', author: 'Kaito Renn', price: '$6.50', numericPrice: 6.5, styleKey: 'cyberpunk', categoryKey: 'environment', format: 'PNG Sprite Sheet', kind: 'sprite', rating: 4.6, reviews: 98 },
-  { id: 3, title: 'Hand Drawn Foliage', author: 'Elin Marsh', price: '$3.25', numericPrice: 3.25, styleKey: 'handPainted', categoryKey: 'environment', format: 'PNG Sprite Sheet', kind: 'sprite', rating: 4.9, reviews: 152 },
-  { id: 4, title: 'Photoreal Rock Set', author: 'Dorian Kell', price: '$9.00', numericPrice: 9.0, styleKey: 'realistic', categoryKey: 'prop', format: 'FBX / OBJ', kind: 'model', rating: 4.7, reviews: 76 },
-  { id: 5, title: 'Low Poly Character Rig', author: 'Mira Voss', price: '$7.75', numericPrice: 7.75, styleKey: 'lowPoly', categoryKey: 'character', format: 'FBX / Unity Package', kind: 'model', rating: 4.5, reviews: 133 },
-  { id: 6, title: 'Chrome Signage Kit', author: 'Kaito Renn', price: '$5.20', numericPrice: 5.2, styleKey: 'cyberpunk', categoryKey: 'prop', format: 'FBX / OBJ', kind: 'sprite', rating: 4.3, reviews: 54 },
-  { id: 7, title: 'Watercolor Terrain Tiles', author: 'Elin Marsh', price: '$4.00', numericPrice: 4.0, styleKey: 'handPainted', categoryKey: 'environment', format: 'PNG Sprite Sheet', kind: 'sprite', rating: 4.8, reviews: 189 },
-  { id: 8, title: 'Realistic Prop Bundle', author: 'Dorian Kell', price: '$11.99', numericPrice: 11.99, styleKey: 'realistic', categoryKey: 'prop', format: 'FBX / OBJ', kind: 'model', rating: 4.6, reviews: 61 },
-  { id: 9, title: 'Low Poly Vehicle Set', author: 'Sana Ito', price: '$8.40', numericPrice: 8.4, styleKey: 'lowPoly', categoryKey: 'prop', format: 'Unity Package', kind: 'model', rating: 4.4, reviews: 87 },
-  { id: 10, title: 'Cyberpunk HUD Icons', author: 'Kaito Renn', price: '$2.99', numericPrice: 2.99, styleKey: 'cyberpunk', categoryKey: 'uiKit', format: 'PNG Sprite Sheet', kind: 'sprite', rating: 4.2, reviews: 43 },
-  { id: 11, title: 'Painted Sky Backdrops', author: 'Elin Marsh', price: '$3.75', numericPrice: 3.75, styleKey: 'handPainted', categoryKey: 'environment', format: 'PNG Sprite Sheet', kind: 'sprite', rating: 4.9, reviews: 201 },
-  { id: 12, title: 'Realistic Foliage Scan', author: 'Sana Ito', price: '$6.99', numericPrice: 6.99, styleKey: 'realistic', categoryKey: 'environment', format: 'FBX / OBJ', kind: 'model', rating: 4.7, reviews: 112 },
-]
 
 function RatingStars({ rating, reviews }: { rating: number; reviews: number }) {
   return (
@@ -71,7 +56,7 @@ function AssetCard({ asset }: { asset: Asset }) {
       </div>
 
       <span className="text-[10px] font-medium text-[#0000FF] uppercase tracking-widest mb-1">
-        {t(`marketplace.categories.${asset.categoryKey}`)}
+        {t(`marketplace.categories.${asset.category_key}`)}
       </span>
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
       <span className="text-xs text-black/50 mb-2">
@@ -82,7 +67,7 @@ function AssetCard({ asset }: { asset: Asset }) {
       </div>
 
       <div className="flex items-center justify-between mt-auto">
-        <span className="text-sm font-semibold text-black">{asset.price}</span>
+        <span className="text-sm font-semibold text-black">${asset.price.toFixed(2)}</span>
         <button className="rounded-none border border-black bg-black text-white px-3 py-2 flex items-center gap-2 text-xs font-medium hover:bg-white hover:text-black transition-colors">
           <ShoppingCart size={14} strokeWidth={1.5} />
           {t('marketplace.addToCart')}
@@ -94,20 +79,37 @@ function AssetCard({ asset }: { asset: Asset }) {
 
 export default function Marketplace() {
   const { t } = useLanguage()
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [activeStyle, setActiveStyle] = useState<string>('all')
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortOption>('popular')
 
+  useEffect(() => {
+    const fetchAssets = async () => {
+      setIsLoading(true)
+      const { data, error } = await supabase.from('assets').select('*')
+
+      if (!error && data) {
+        setAssets(data as Asset[])
+      }
+
+      setIsLoading(false)
+    }
+
+    fetchAssets()
+  }, [])
+
   const filteredAssets = useMemo(() => {
-    let result = ASSETS
+    let result = assets
 
     if (activeStyle !== 'all') {
-      result = result.filter((asset) => asset.styleKey === activeStyle)
+      result = result.filter((asset) => asset.style_key === activeStyle)
     }
 
     if (activeCategory !== 'all') {
-      result = result.filter((asset) => asset.categoryKey === activeCategory)
+      result = result.filter((asset) => asset.category_key === activeCategory)
     }
 
     if (query.trim() !== '') {
@@ -120,17 +122,17 @@ export default function Marketplace() {
 
     const sorted = [...result]
     if (sort === 'priceAsc') {
-      sorted.sort((a, b) => a.numericPrice - b.numericPrice)
+      sorted.sort((a, b) => a.price - b.price)
     } else if (sort === 'priceDesc') {
-      sorted.sort((a, b) => b.numericPrice - a.numericPrice)
+      sorted.sort((a, b) => b.price - a.price)
     } else if (sort === 'newest') {
-      sorted.sort((a, b) => b.id - a.id)
+      sorted.sort((a, b) => b.id.localeCompare(a.id))
     } else {
       sorted.sort((a, b) => b.reviews - a.reviews)
     }
 
     return sorted
-  }, [activeStyle, activeCategory, query, sort])
+  }, [assets, activeStyle, activeCategory, query, sort])
 
   return (
     <div className="px-8 py-12">
@@ -231,7 +233,11 @@ export default function Marketplace() {
             </span>
           </div>
 
-          {filteredAssets.length > 0 ? (
+          {isLoading ? (
+            <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
+              <span className="text-sm font-medium text-black/40">Loading assets...</span>
+            </div>
+          ) : filteredAssets.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {filteredAssets.map((asset) => (
                 <AssetCard key={asset.id} asset={asset} />
