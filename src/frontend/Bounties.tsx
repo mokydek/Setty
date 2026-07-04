@@ -7,7 +7,7 @@ interface Bounty {
   id: string
   title: string
   description: string
-  style_key: string
+  style: string
   reward: number
   status: string
   user_id: string
@@ -23,7 +23,7 @@ function BountyCard({ bounty, onAccept }: { bounty: Bounty; onAccept: (id: strin
       <div className="flex items-start justify-between gap-4">
         <h3 className="text-lg font-bold tracking-tight text-black">{bounty.title}</h3>
         <span className="text-xs font-medium text-black/50 uppercase tracking-widest whitespace-nowrap pt-1">
-          {t(`marketplace.styles.${bounty.style_key}`)}
+          {t(`marketplace.styles.${bounty.style}`)}
         </span>
       </div>
 
@@ -84,7 +84,7 @@ export default function Bounties() {
       {
         title,
         description,
-        style_key: style,
+        style,
         reward: parseFloat(reward),
         status: 'open',
         user_id: user.id,

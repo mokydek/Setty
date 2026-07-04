@@ -26,7 +26,7 @@ interface Bounty {
   id: string
   title: string
   description: string
-  style_key: string
+  style: string
   reward: number
   status: string
   user_id: string
