@@ -4,13 +4,17 @@ import { ImageOff, ShoppingCart, Download, Heart } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
+import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
+import { getSignedAssetFileUrl, triggerDownload } from '../lib/assetFiles'
+import { formatFileSize, resolveAssetAction } from '../lib/assetAccess'
 import type { Asset } from '../types/database.types'
 
 export default function AssetDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const { addToCart } = useCart()
   const { isWishlisted, toggleWishlist } = useWishlist()
 
@@ -67,6 +71,26 @@ export default function AssetDetail() {
   }, [id, user])
 
   const isOwnListing = !!user && !!asset && user.id === asset.seller_id
+  const action = asset
+    ? resolveAssetAction({ isOwnListing, alreadyOwned, price: asset.price })
+    : null
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  const handleDownload = async () => {
+    if (!asset?.file_path) return
+    setError(null)
+    setIsDownloading(true)
+
+    const { url, error: signError } = await getSignedAssetFileUrl(asset.file_path)
+    setIsDownloading(false)
+
+    if (!url) {
+      setError(signError ?? t('assetFile.downloadFailed'))
+      return
+    }
+
+    triggerDownload(url, asset.file_path.split('/').pop() ?? asset.title)
+  }
 
   const handleBuy = () => {
     if (!asset) return
@@ -161,9 +185,24 @@ export default function AssetDetail() {
             by {asset.author_name}
           </Link>
 
-          <p className="text-sm text-black/60 leading-relaxed mb-8">
+          <p className="text-sm text-black/60 leading-relaxed mb-4">
             {asset.description || 'No description provided.'}
           </p>
+
+          {asset.file_path && (
+            <div className="flex items-center gap-4 mb-8 text-xs text-black/60">
+              {asset.file_format && (
+                <span className="border border-black px-2 py-1 font-medium uppercase tracking-widest">
+                  {asset.file_format}
+                </span>
+              )}
+              {typeof asset.file_size_bytes === 'number' && (
+                <span>
+                  {t('assetFile.size')}: {formatFileSize(asset.file_size_bytes)}
+                </span>
+              )}
+            </div>
+          )}
 
           {message && (
             <div className="rounded-none border border-black bg-white px-4 py-3 mb-6">
@@ -182,16 +221,27 @@ export default function AssetDetail() {
               {asset.price > 0 ? `$${asset.price.toFixed(2)}` : 'Free'}
             </span>
 
-            {isOwnListing ? (
+            {action === 'ownListing' ? (
               <span className="text-sm font-medium text-black/40">This is your own listing</span>
-            ) : alreadyOwned ? (
-              <Link
-                to="/dashboard"
-                className="rounded-none border border-black text-black px-6 py-3 text-sm font-semibold hover:bg-black hover:text-white transition-colors"
-              >
-                Already owned
-              </Link>
-            ) : asset.price > 0 ? (
+            ) : action === 'download' ? (
+              asset.file_path ? (
+                <button
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="rounded-none bg-[#0000FF] text-white px-6 py-3 flex items-center gap-2 text-sm font-semibold hover:bg-black transition-colors disabled:opacity-50"
+                >
+                  <Download size={16} strokeWidth={1.5} />
+                  {isDownloading ? t('assetFile.preparing') : t('assetFile.download')}
+                </button>
+              ) : (
+                <Link
+                  to="/dashboard"
+                  className="rounded-none border border-black text-black px-6 py-3 text-sm font-semibold hover:bg-black hover:text-white transition-colors"
+                >
+                  Already owned
+                </Link>
+              )
+            ) : action === 'buy' ? (
               <button
                 onClick={handleBuy}
                 className="rounded-none bg-[#0000FF] text-white px-6 py-3 flex items-center gap-2 text-sm font-semibold hover:bg-black transition-colors"

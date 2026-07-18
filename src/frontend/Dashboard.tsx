@@ -4,6 +4,8 @@ import { Download, ImageOff, Pencil, Trash2 } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
+import { getSignedAssetFileUrl, triggerDownload } from '../lib/assetFiles'
+import { formatFileSize } from '../lib/assetAccess'
 import type { Asset, Bounty, Purchase } from '../types/database.types'
 
 type Tab = 'assets' | 'listings' | 'bounties' | 'working'
@@ -11,6 +13,24 @@ type Tab = 'assets' | 'listings' | 'bounties' | 'working'
 function OwnedAssetCard({ asset }: { asset: Asset }) {
   const { t } = useLanguage()
   const [imageFailed, setImageFailed] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
+
+  const handleDownload = async () => {
+    if (!asset.file_path) return
+    setDownloadError(null)
+    setIsDownloading(true)
+
+    const { url, error } = await getSignedAssetFileUrl(asset.file_path)
+    setIsDownloading(false)
+
+    if (!url) {
+      setDownloadError(error ?? t('assetFile.downloadFailed'))
+      return
+    }
+
+    triggerDownload(url, asset.file_path.split('/').pop() ?? asset.title)
+  }
 
   return (
     <div className="rounded-none border border-black bg-white p-4 flex flex-col">
@@ -28,11 +48,27 @@ function OwnedAssetCard({ asset }: { asset: Asset }) {
       </div>
 
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-4">{asset.author_name}</span>
+      <span className="text-xs text-black/50 mb-1">{asset.author_name}</span>
+      {asset.file_format && (
+        <span className="text-xs text-black/40 mb-4 uppercase tracking-widest">
+          {asset.file_format}
+          {typeof asset.file_size_bytes === 'number'
+            ? ` · ${formatFileSize(asset.file_size_bytes)}`
+            : ''}
+        </span>
+      )}
 
-      <button className="rounded-none bg-[#0000FF] text-white px-3 py-2 flex items-center justify-center gap-2 text-xs font-medium hover:bg-black transition-colors mt-auto">
+      {downloadError && (
+        <span className="text-xs text-red-600 mb-2">{downloadError}</span>
+      )}
+
+      <button
+        onClick={handleDownload}
+        disabled={!asset.file_path || isDownloading}
+        className="rounded-none bg-[#0000FF] text-white px-3 py-2 flex items-center justify-center gap-2 text-xs font-medium hover:bg-black transition-colors mt-auto disabled:opacity-50"
+      >
         <Download size={14} strokeWidth={1.5} />
-        {t('dashboard.download')}
+        {isDownloading ? t('assetFile.preparing') : t('dashboard.download')}
       </button>
     </div>
   )

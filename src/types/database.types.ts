@@ -13,6 +13,9 @@ export interface Asset {
   image_url: string
   seller_id: string
   description?: string
+  file_path?: string | null
+  file_size_bytes?: number | null
+  file_format?: string | null
 }
 
 export interface Bounty {

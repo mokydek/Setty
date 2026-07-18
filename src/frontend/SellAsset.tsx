@@ -1,12 +1,19 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload } from 'lucide-react'
+import { FileArchive, Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
+import { uploadAssetFile } from '../lib/assetFiles'
+import {
+  MAX_ASSET_FILE_BYTES,
+  formatFileSize,
+  getFileExtension,
+  isAllowedAssetFile,
+} from '../lib/assetAccess'
 import type { Asset } from '../types/database.types'
 
-type NewAsset = Omit<Asset, 'id' | 'created_at' | 'description'>
+type NewAsset = Omit<Asset, 'id' | 'created_at' | 'description' | 'file_path' | 'file_size_bytes' | 'file_format'>
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
@@ -15,16 +22,37 @@ export default function SellAsset() {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const assetFileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState('')
   const [style, setStyle] = useState<string>(STYLE_KEYS[0])
   const [price, setPrice] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [author, setAuthor] = useState('')
+  const [assetFile, setAssetFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+
+  const handleAssetFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setError(null)
+
+    if (!isAllowedAssetFile(file.name)) {
+      setError(t('assetFile.badFormat'))
+      return
+    }
+    if (file.size > MAX_ASSET_FILE_BYTES) {
+      setError(t('assetFile.tooLarge'))
+      return
+    }
+
+    setAssetFile(file)
+  }
 
   const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -60,6 +88,11 @@ export default function SellAsset() {
       return
     }
 
+    if (!assetFile) {
+      setError(t('assetFile.required'))
+      return
+    }
+
     setIsPublishing(true)
 
     const newAsset: NewAsset = {
@@ -76,18 +109,49 @@ export default function SellAsset() {
       .insert([newAsset])
       .select()
 
-    setIsPublishing(false)
-    console.log('[SellAsset] insert response:', { data, error: insertError })
-
     if (insertError) {
+      setIsPublishing(false)
       setError(insertError.message)
       return
     }
 
     if (!data || data.length === 0) {
+      setIsPublishing(false)
       setError(
         'The asset was submitted but nothing was returned by the database. This usually means a SELECT policy is missing on the assets table, so the row may exist but cannot be read back.',
       )
+      return
+    }
+
+    const assetId = (data[0] as Asset).id
+    const filePath = `${user.id}/${assetId}/${assetFile.name}`
+
+    setUploadProgress(0)
+    const { error: uploadError } = await uploadAssetFile(filePath, assetFile, setUploadProgress)
+
+    if (uploadError) {
+      // Do not leave a file-less asset in the catalogue.
+      await supabase.from('assets').delete().eq('id', assetId)
+      setUploadProgress(null)
+      setIsPublishing(false)
+      setError(uploadError)
+      return
+    }
+
+    const { error: fileUpdateError } = await supabase
+      .from('assets')
+      .update({
+        file_path: filePath,
+        file_size_bytes: assetFile.size,
+        file_format: getFileExtension(assetFile.name),
+      })
+      .eq('id', assetId)
+
+    setUploadProgress(null)
+    setIsPublishing(false)
+
+    if (fileUpdateError) {
+      setError(fileUpdateError.message)
       return
     }
 
@@ -97,6 +161,8 @@ export default function SellAsset() {
     setStyle(STYLE_KEYS[0])
     setPrice('')
     setImageUrl('')
+    setAssetFile(null)
+    if (assetFileInputRef.current) assetFileInputRef.current.value = ''
   }
 
   return (
@@ -220,6 +286,50 @@ export default function SellAsset() {
                 {isUploading ? 'Uploading...' : 'Upload'}
               </button>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="assetFile" className="text-xs font-medium text-black/60">
+              {t('assetFile.label')}
+            </label>
+            <input
+              ref={assetFileInputRef}
+              id="assetFile"
+              type="file"
+              accept=".zip,.fbx,.glb,.png"
+              onChange={handleAssetFileChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => assetFileInputRef.current?.click()}
+              disabled={isPublishing}
+              className="rounded-none border border-black px-4 py-3 flex items-center gap-2 text-sm font-medium text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+            >
+              <FileArchive size={14} strokeWidth={1.5} />
+              {assetFile ? assetFile.name : t('assetFile.choose')}
+            </button>
+            {assetFile ? (
+              <span className="text-xs text-black/60">
+                {t('assetFile.format')}: {getFileExtension(assetFile.name).toUpperCase()} &middot;{' '}
+                {t('assetFile.size')}: {formatFileSize(assetFile.size)}
+              </span>
+            ) : (
+              <span className="text-xs text-black/40">{t('assetFile.hint')}</span>
+            )}
+            {uploadProgress !== null && (
+              <div className="flex flex-col gap-1">
+                <div className="h-2 w-full border border-black">
+                  <div
+                    className="h-full bg-[#0000FF] transition-all"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-black/60">
+                  {t('assetFile.uploading')} {uploadProgress}%
+                </span>
+              </div>
+            )}
           </div>
 
           <button

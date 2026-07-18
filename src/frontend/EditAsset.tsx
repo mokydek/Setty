@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Upload } from 'lucide-react'
+import { FileArchive, Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
+import { uploadAssetFile } from '../lib/assetFiles'
+import {
+  MAX_ASSET_FILE_BYTES,
+  formatFileSize,
+  getFileExtension,
+  isAllowedAssetFile,
+} from '../lib/assetAccess'
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
@@ -13,18 +20,42 @@ export default function EditAsset() {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const assetFileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState('')
   const [style, setStyle] = useState<string>(STYLE_KEYS[0])
   const [price, setPrice] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [author, setAuthor] = useState('')
+  const [currentFilePath, setCurrentFilePath] = useState<string | null>(null)
+  const [currentFileSize, setCurrentFileSize] = useState<number | null>(null)
+  const [currentFileFormat, setCurrentFileFormat] = useState<string | null>(null)
+  const [newAssetFile, setNewAssetFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+
+  const handleAssetFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setError(null)
+
+    if (!isAllowedAssetFile(file.name)) {
+      setError(t('assetFile.badFormat'))
+      return
+    }
+    if (file.size > MAX_ASSET_FILE_BYTES) {
+      setError(t('assetFile.tooLarge'))
+      return
+    }
+
+    setNewAssetFile(file)
+  }
 
   const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -70,6 +101,9 @@ export default function EditAsset() {
         setStyle(data.style ?? STYLE_KEYS[0])
         setPrice(String(data.price ?? ''))
         setImageUrl(data.image_url ?? '')
+        setCurrentFilePath(data.file_path ?? null)
+        setCurrentFileSize(data.file_size_bytes ?? null)
+        setCurrentFileFormat(data.file_format ?? null)
       }
 
       setIsLoading(false)
@@ -87,6 +121,27 @@ export default function EditAsset() {
 
     setIsSaving(true)
 
+    let fileColumns: Record<string, string | number> = {}
+
+    if (newAssetFile) {
+      const filePath = `${user.id}/${id}/${newAssetFile.name}`
+      setUploadProgress(0)
+      const { error: uploadError } = await uploadAssetFile(filePath, newAssetFile, setUploadProgress)
+      setUploadProgress(null)
+
+      if (uploadError) {
+        setIsSaving(false)
+        setError(uploadError)
+        return
+      }
+
+      fileColumns = {
+        file_path: filePath,
+        file_size_bytes: newAssetFile.size,
+        file_format: getFileExtension(newAssetFile.name),
+      }
+    }
+
     const { error: updateError } = await supabase
       .from('assets')
       .update({
@@ -95,6 +150,7 @@ export default function EditAsset() {
         price: parseFloat(price),
         style,
         image_url: imageUrl,
+        ...fileColumns,
       })
       .eq('id', id)
       .eq('seller_id', user.id)
@@ -104,6 +160,14 @@ export default function EditAsset() {
     if (updateError) {
       setError(updateError.message)
       return
+    }
+
+    if (newAssetFile) {
+      setCurrentFilePath(`${user.id}/${id}/${newAssetFile.name}`)
+      setCurrentFileSize(newAssetFile.size)
+      setCurrentFileFormat(getFileExtension(newAssetFile.name))
+      setNewAssetFile(null)
+      if (assetFileInputRef.current) assetFileInputRef.current.value = ''
     }
 
     setMessage('Saved.')
@@ -246,6 +310,52 @@ export default function EditAsset() {
                 {isUploading ? 'Uploading...' : 'Upload'}
               </button>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="assetFile" className="text-xs font-medium text-black/60">
+              {t('assetFile.label')}
+            </label>
+            {currentFilePath ? (
+              <span className="text-xs text-black/60">
+                {t('assetFile.current')}: {currentFilePath.split('/').pop()}
+                {currentFileFormat ? ` · ${t('assetFile.format')}: ${currentFileFormat.toUpperCase()}` : ''}
+                {currentFileSize ? ` · ${t('assetFile.size')}: ${formatFileSize(currentFileSize)}` : ''}
+              </span>
+            ) : (
+              <span className="text-xs text-black/40">{t('assetFile.noFile')}</span>
+            )}
+            <input
+              ref={assetFileInputRef}
+              id="assetFile"
+              type="file"
+              accept=".zip,.fbx,.glb,.png"
+              onChange={handleAssetFileChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => assetFileInputRef.current?.click()}
+              disabled={isSaving}
+              className="rounded-none border border-black px-4 py-3 flex items-center gap-2 text-sm font-medium text-black hover:bg-black hover:text-white transition-colors disabled:opacity-50"
+            >
+              <FileArchive size={14} strokeWidth={1.5} />
+              {newAssetFile ? newAssetFile.name : t('assetFile.choose')}
+            </button>
+            <span className="text-xs text-black/40">{t('assetFile.replaceHint')}</span>
+            {uploadProgress !== null && (
+              <div className="flex flex-col gap-1">
+                <div className="h-2 w-full border border-black">
+                  <div
+                    className="h-full bg-[#0000FF] transition-all"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-black/60">
+                  {t('assetFile.uploading')} {uploadProgress}%
+                </span>
+              </div>
+            )}
           </div>
 
           <button
