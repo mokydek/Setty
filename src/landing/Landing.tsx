@@ -192,7 +192,12 @@ export default function Landing() {
 
       <footer className="px-8 py-8 border-t border-gray-200 flex items-center justify-between max-w-6xl mx-auto">
         <span className="font-bold text-lg tracking-tight text-black">{t('footer.brand')}</span>
-        <span className="text-sm text-black/40">{new Date().getFullYear()}</span>
+        <div className="flex items-center gap-6">
+          <Link to="/license" className="text-sm text-black/60 hover:text-[#0000FF] transition-colors">
+            {t('license.footerLink')}
+          </Link>
+          <span className="text-sm text-black/40">{new Date().getFullYear()}</span>
+        </div>
       </footer>
     </div>
   )

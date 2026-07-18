@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FileArchive, Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -34,6 +34,7 @@ export default function SellAsset() {
   const [imageUrl, setImageUrl] = useState('')
   const [author, setAuthor] = useState('')
   const [assetFile, setAssetFile] = useState<File | null>(null)
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -118,7 +119,19 @@ export default function SellAsset() {
       return
     }
 
+    if (!termsAccepted) {
+      setError(t('license.sellerCheckboxRequired'))
+      return
+    }
+
     setIsPublishing(true)
+
+    // Record acceptance of the seller terms on the profile.
+    await supabase
+      .from('profiles')
+      .update({ sellers_accepted_terms_at: new Date().toISOString() })
+      .eq('id', user.id)
+      .is('sellers_accepted_terms_at', null)
 
     const newAsset: NewAsset = {
       title,
@@ -398,9 +411,24 @@ export default function SellAsset() {
             )}
           </div>
 
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded-none accent-[#0000FF] border border-black"
+            />
+            <span className="text-xs text-black/70 leading-relaxed">
+              {t('license.sellerCheckbox')}{' '}
+              <Link to="/license" className="text-[#0000FF] hover:text-black transition-colors underline underline-offset-2">
+                {t('license.footerLink')}
+              </Link>
+            </span>
+          </label>
+
           <button
             type="submit"
-            disabled={isPublishing}
+            disabled={isPublishing || !termsAccepted}
             className="rounded-none bg-[#0000FF] text-white px-6 py-3 text-sm font-semibold hover:bg-black transition-colors mt-2 disabled:opacity-50"
           >
             {isPublishing ? 'Publishing...' : 'Publish Asset'}

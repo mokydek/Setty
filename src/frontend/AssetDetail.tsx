@@ -290,6 +290,15 @@ export default function AssetDetail() {
             </div>
           )}
 
+          <div className="mb-3">
+            <Link
+              to="/license"
+              className="text-xs text-black/50 hover:text-[#0000FF] transition-colors underline underline-offset-2"
+            >
+              {t('license.standardLine')}
+            </Link>
+          </div>
+
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col gap-1">
               <span className="text-2xl font-bold tracking-tight text-black">
