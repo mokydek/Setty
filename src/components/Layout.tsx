@@ -77,6 +77,12 @@ export default function Layout() {
     }
   }, [debouncedQuery])
 
+  // Keep the profile's email locale in sync with the UI language.
+  useEffect(() => {
+    if (!user) return
+    supabase.from('profiles').update({ locale: language }).eq('id', user.id).then(() => {})
+  }, [language, user])
+
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
