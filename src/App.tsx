@@ -9,6 +9,7 @@ import Landing from './landing/Landing'
 import Marketplace from './frontend/Marketplace'
 import Auth from './frontend/Auth'
 import Bounties from './frontend/Bounties'
+import BountyDetail from './frontend/BountyDetail'
 import Dashboard from './frontend/Dashboard'
 import Cart from './frontend/Cart'
 import SellAsset from './frontend/SellAsset'
@@ -33,6 +34,7 @@ export default function App() {
                   <Route path="/app" element={<Marketplace />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/bounties" element={<Bounties />} />
+                  <Route path="/bounty/:id" element={<BountyDetail />} />
                   <Route
                     path="/dashboard"
                     element={

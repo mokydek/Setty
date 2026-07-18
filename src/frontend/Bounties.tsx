@@ -1,34 +1,79 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
+import { isBountyStatus } from '../lib/bountyMachine'
 import type { Bounty } from '../types/database.types'
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
-function BountyCard({ bounty, onAccept }: { bounty: Bounty; onAccept: (id: string) => void }) {
+type FilterTab = 'all' | 'open' | 'mineCreated' | 'mineAssigned'
+
+export function statusKey(status: string): string {
+  return status === 'in_progress' ? 'inProgress' : status
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useLanguage()
+  if (!isBountyStatus(status)) return null
+
+  return (
+    <span
+      className={`text-[10px] font-medium uppercase tracking-widest px-2 py-1 border w-fit whitespace-nowrap ${
+        status === 'open'
+          ? 'border-[#0000FF] text-[#0000FF]'
+          : status === 'approved' || status === 'paid'
+            ? 'border-black bg-black text-white'
+            : status === 'cancelled'
+              ? 'border-black/30 text-black/40'
+              : 'border-black text-black'
+      }`}
+    >
+      {t(`bountyStatus.${statusKey(status)}`)}
+    </span>
+  )
+}
+
+function BountyCard({ bounty, onAccept, canAccept }: { bounty: Bounty; onAccept: (id: string) => void; canAccept: boolean }) {
   const { t } = useLanguage()
 
   return (
     <div className="rounded-none border border-black bg-white p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
-        <h3 className="text-lg font-bold tracking-tight text-black">{bounty.title}</h3>
+        <Link
+          to={`/bounty/${bounty.id}`}
+          className="text-lg font-bold tracking-tight text-black hover:text-[#0000FF] transition-colors"
+        >
+          {bounty.title}
+        </Link>
         <span className="text-xs font-medium text-black/50 uppercase tracking-widest whitespace-nowrap pt-1">
           {t(`marketplace.styles.${bounty.style}`)}
         </span>
       </div>
 
-      <p className="text-sm text-black/60 leading-relaxed">{bounty.description}</p>
+      <StatusBadge status={bounty.status} />
+
+      <p className="text-sm text-black/60 leading-relaxed line-clamp-3">{bounty.description}</p>
 
       <div className="flex items-center justify-between mt-auto pt-2">
         <span className="text-lg font-semibold text-[#0000FF]">${bounty.reward.toFixed(2)}</span>
-        <button
-          onClick={() => onAccept(bounty.id)}
-          className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-[#0000FF] hover:text-white hover:border-[#0000FF] transition-colors"
-        >
-          {t('bounties.acceptTask')}
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/bounty/${bounty.id}`}
+            className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors"
+          >
+            {t('bounties.details')}
+          </Link>
+          {bounty.status === 'open' && canAccept && (
+            <button
+              onClick={() => onAccept(bounty.id)}
+              className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-[#0000FF] hover:text-white hover:border-[#0000FF] transition-colors"
+            >
+              {t('bounties.acceptTask')}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -40,6 +85,7 @@ export default function Bounties() {
   const navigate = useNavigate()
   const [bounties, setBounties] = useState<Bounty[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [tab, setTab] = useState<FilterTab>('all')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [style, setStyle] = useState<string>(STYLE_KEYS[0])
@@ -49,7 +95,10 @@ export default function Bounties() {
 
   const fetchBounties = async () => {
     setIsLoading(true)
-    const { data, error } = await supabase.from('bounties').select('*').eq('status', 'open')
+    const { data, error } = await supabase
+      .from('bounties')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (!error && data) {
       setBounties(data as Bounty[])
@@ -57,6 +106,19 @@ export default function Bounties() {
 
     setIsLoading(false)
   }
+
+  const visibleBounties = bounties.filter((bounty) => {
+    switch (tab) {
+      case 'open':
+        return bounty.status === 'open'
+      case 'mineCreated':
+        return !!user && bounty.user_id === user.id
+      case 'mineAssigned':
+        return !!user && bounty.assignee_id === user.id
+      default:
+        return true
+    }
+  })
 
   useEffect(() => {
     fetchBounties()
@@ -208,23 +270,40 @@ export default function Bounties() {
         </div>
 
         <div className="lg:col-span-2">
-          <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-4 block">
-            {t('bounties.openBounties')}
-          </span>
+          <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
+            {(['all', 'open', 'mineCreated', 'mineAssigned'] as const).map((key) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`pb-3 text-sm transition-colors ${
+                  tab === key
+                    ? 'border-b-2 border-black text-black font-bold'
+                    : 'text-black/40 hover:text-black'
+                }`}
+              >
+                {t(`bounties.tabs.${key}`)}
+              </button>
+            ))}
+          </div>
 
           {isLoading ? (
             <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
               <span className="text-sm font-medium text-black/40">Loading bounties...</span>
             </div>
-          ) : bounties.length > 0 ? (
+          ) : visibleBounties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {bounties.map((bounty) => (
-                <BountyCard key={bounty.id} bounty={bounty} onAccept={handleAccept} />
+              {visibleBounties.map((bounty) => (
+                <BountyCard
+                  key={bounty.id}
+                  bounty={bounty}
+                  onAccept={handleAccept}
+                  canAccept={!user || bounty.user_id !== user.id}
+                />
               ))}
             </div>
           ) : (
             <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
-              <span className="text-sm font-medium text-black/40">No open bounties yet.</span>
+              <span className="text-sm font-medium text-black/40">{t('bounties.emptyTab')}</span>
             </div>
           )}
         </div>

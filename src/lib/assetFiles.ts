@@ -1,9 +1,10 @@
 import { supabase } from '../backend/supabase'
 
-// Uploads a product file to the private asset-files bucket with real
-// progress reporting. supabase-js standard uploads do not expose progress,
-// so this talks to the Storage REST endpoint directly with the user's JWT.
-export async function uploadAssetFile(
+// Uploads a file to a private bucket with real progress reporting.
+// supabase-js standard uploads do not expose progress, so this talks to the
+// Storage REST endpoint directly with the user's JWT.
+export async function uploadToBucket(
+  bucket: string,
   path: string,
   file: File,
   onProgress: (percent: number) => void,
@@ -14,7 +15,7 @@ export async function uploadAssetFile(
 
   const baseUrl: string = import.meta.env.VITE_SUPABASE_URL
   const encodedPath = path.split('/').map(encodeURIComponent).join('/')
-  const url = `${baseUrl}/storage/v1/object/asset-files/${encodedPath}`
+  const url = `${baseUrl}/storage/v1/object/${bucket}/${encodedPath}`
 
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest()
@@ -50,16 +51,29 @@ export async function uploadAssetFile(
   })
 }
 
-// Returns a one-hour signed URL for a purchased asset file.
-export async function getSignedAssetFileUrl(
+export function uploadAssetFile(
+  path: string,
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<{ error: string | null }> {
+  return uploadToBucket('asset-files', path, file, onProgress)
+}
+
+// Returns a one-hour signed URL for a file in a private bucket.
+export async function getSignedFileUrl(
+  bucket: string,
   filePath: string,
 ): Promise<{ url: string | null; error: string | null }> {
-  const { data, error } = await supabase.storage.from('asset-files').createSignedUrl(filePath, 3600)
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 3600)
 
   if (error || !data?.signedUrl) {
     return { url: null, error: error?.message ?? 'Could not create download link.' }
   }
   return { url: data.signedUrl, error: null }
+}
+
+export function getSignedAssetFileUrl(filePath: string) {
+  return getSignedFileUrl('asset-files', filePath)
 }
 
 // Triggers a browser download for a signed URL.

@@ -30,6 +30,18 @@ export interface Bounty {
   assignee_id?: string | null
 }
 
+export interface BountySubmission {
+  id: string
+  created_at: string
+  bounty_id: string
+  artist_id: string
+  file_path: string
+  preview_url?: string | null
+  comment?: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  rejection_comment?: string | null
+}
+
 export interface Profile {
   id: string
   nickname: string

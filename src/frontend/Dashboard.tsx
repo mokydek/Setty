@@ -115,53 +115,51 @@ function MyListingCard({ asset, onDelete }: { asset: Asset; onDelete: (id: strin
   )
 }
 
+function bountyStatusKey(status: string): string {
+  return status === 'in_progress' ? 'inProgress' : status
+}
+
 function MyBountyRow({
   bounty,
-  onMarkDone,
   onDelete,
 }: {
   bounty: Bounty
-  onMarkDone: (id: string) => void
   onDelete: (id: string) => void
 }) {
   const { t } = useLanguage()
-  const isCompleted = bounty.status === 'completed'
 
   return (
     <div className="rounded-none border border-black bg-white p-6 flex items-center justify-between gap-4">
       <span className="text-sm font-bold text-black tracking-tight">{bounty.title}</span>
 
       <div className="flex items-center gap-6">
-        <span
-          className={`text-xs font-medium uppercase tracking-widest ${
-            isCompleted ? 'text-black' : 'text-black/40'
-          }`}
-        >
-          {isCompleted ? t('dashboard.statusCompleted') : t('dashboard.statusInProgress')}
+        <span className="text-xs font-medium uppercase tracking-widest text-black/40">
+          {t(`bountyStatus.${bountyStatusKey(bounty.status)}`)}
         </span>
 
-        <button
-          onClick={() => !isCompleted && onMarkDone(bounty.id)}
+        <Link
+          to={`/bounty/${bounty.id}`}
           className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors"
         >
-          {isCompleted ? t('dashboard.viewFiles') : t('dashboard.markDone')}
-        </button>
+          {t('bounties.details')}
+        </Link>
 
-        <button
-          onClick={() => onDelete(bounty.id)}
-          className="rounded-none border border-black text-black px-3 py-2 hover:bg-red-600 hover:border-red-600 hover:text-white transition-colors"
-          aria-label="Delete bounty"
-        >
-          <Trash2 size={14} strokeWidth={1.5} />
-        </button>
+        {bounty.status === 'open' && (
+          <button
+            onClick={() => onDelete(bounty.id)}
+            className="rounded-none border border-black text-black px-3 py-2 hover:bg-red-600 hover:border-red-600 hover:text-white transition-colors"
+            aria-label="Delete bounty"
+          >
+            <Trash2 size={14} strokeWidth={1.5} />
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
-function WorkingOnBountyRow({ bounty, onMarkDone }: { bounty: Bounty; onMarkDone: (id: string) => void }) {
+function WorkingOnBountyRow({ bounty }: { bounty: Bounty }) {
   const { t } = useLanguage()
-  const isCompleted = bounty.status === 'completed'
 
   return (
     <div className="rounded-none border border-black bg-white p-6 flex items-center justify-between gap-4">
@@ -171,20 +169,16 @@ function WorkingOnBountyRow({ bounty, onMarkDone }: { bounty: Bounty; onMarkDone
       </div>
 
       <div className="flex items-center gap-6">
-        <span
-          className={`text-xs font-medium uppercase tracking-widest ${
-            isCompleted ? 'text-black' : 'text-black/40'
-          }`}
-        >
-          {isCompleted ? t('dashboard.statusCompleted') : t('dashboard.statusInProgress')}
+        <span className="text-xs font-medium uppercase tracking-widest text-black/40">
+          {t(`bountyStatus.${bountyStatusKey(bounty.status)}`)}
         </span>
 
-        <button
-          onClick={() => !isCompleted && onMarkDone(bounty.id)}
+        <Link
+          to={`/bounty/${bounty.id}`}
           className="rounded-none border border-black text-black px-4 py-2 text-sm font-medium hover:bg-black hover:text-white transition-colors"
         >
-          {isCompleted ? t('dashboard.viewFiles') : t('dashboard.markDone')}
-        </button>
+          {t('bounties.details')}
+        </Link>
       </div>
     </div>
   )
@@ -267,18 +261,6 @@ export default function Dashboard() {
     fetchMyBounties()
     fetchWorkingOnBounties()
   }, [user])
-
-  const handleMarkDone = async (bountyId: string) => {
-    const { error } = await supabase
-      .from('bounties')
-      .update({ status: 'completed' })
-      .eq('id', bountyId)
-
-    if (!error) {
-      await fetchMyBounties()
-      await fetchWorkingOnBounties()
-    }
-  }
 
   const handleDeleteBounty = async (bountyId: string) => {
     if (!window.confirm('Delete this bounty?')) return
@@ -381,12 +363,7 @@ export default function Dashboard() {
         ) : myBounties.length > 0 ? (
           <div className="flex flex-col gap-4">
             {myBounties.map((bounty) => (
-              <MyBountyRow
-                key={bounty.id}
-                bounty={bounty}
-                onMarkDone={handleMarkDone}
-                onDelete={handleDeleteBounty}
-              />
+              <MyBountyRow key={bounty.id} bounty={bounty} onDelete={handleDeleteBounty} />
             ))}
           </div>
         ) : (
@@ -399,7 +376,7 @@ export default function Dashboard() {
         ) : workingOnBounties.length > 0 ? (
           <div className="flex flex-col gap-4">
             {workingOnBounties.map((bounty) => (
-              <WorkingOnBountyRow key={bounty.id} bounty={bounty} onMarkDone={handleMarkDone} />
+              <WorkingOnBountyRow key={bounty.id} bounty={bounty} />
             ))}
           </div>
         ) : (
