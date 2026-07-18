@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 import { getSignedAssetFileUrl, triggerDownload } from '../lib/assetFiles'
 import { formatFileSize } from '../lib/assetAccess'
+import { useAssetRatings, type AssetRating } from '../lib/useAssetRatings'
+import RatingSquares from '../components/RatingSquares'
 import type { Asset, Bounty, Purchase } from '../types/database.types'
 
 type Tab = 'assets' | 'listings' | 'bounties' | 'working'
@@ -98,7 +100,15 @@ function ReviewStatusBadge({ asset }: { asset: Asset }) {
   )
 }
 
-function MyListingCard({ asset, onDelete }: { asset: Asset; onDelete: (id: string) => void }) {
+function MyListingCard({
+  asset,
+  rating,
+  onDelete,
+}: {
+  asset: Asset
+  rating?: AssetRating
+  onDelete: (id: string) => void
+}) {
   const [imageFailed, setImageFailed] = useState(false)
 
   return (
@@ -118,6 +128,11 @@ function MyListingCard({ asset, onDelete }: { asset: Asset; onDelete: (id: strin
 
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
       <span className="text-xs text-black/50 mb-2">${asset.price.toFixed(2)}</span>
+      {rating && rating.review_count > 0 && (
+        <span className="mb-2">
+          <RatingSquares average={rating.avg_rating} count={rating.review_count} size={8} />
+        </span>
+      )}
       <ReviewStatusBadge asset={asset} />
 
       <div className="flex items-center gap-2 mt-auto">
@@ -287,6 +302,8 @@ export default function Dashboard() {
     fetchWorkingOnBounties()
   }, [user])
 
+  const listingRatings = useAssetRatings(myListings.map((asset) => asset.id))
+
   const handleDeleteBounty = async (bountyId: string) => {
     if (!window.confirm('Delete this bounty?')) return
 
@@ -375,7 +392,12 @@ export default function Dashboard() {
         ) : myListings.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {myListings.map((asset) => (
-              <MyListingCard key={asset.id} asset={asset} onDelete={handleDeleteListing} />
+              <MyListingCard
+                key={asset.id}
+                asset={asset}
+                rating={listingRatings[asset.id]}
+                onDelete={handleDeleteListing}
+              />
             ))}
           </div>
         ) : (

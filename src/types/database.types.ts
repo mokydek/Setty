@@ -44,6 +44,15 @@ export interface BountySubmission {
   rejection_comment?: string | null
 }
 
+export interface Review {
+  id: string
+  created_at: string
+  asset_id: string
+  user_id: string
+  rating: number
+  text: string
+}
+
 export interface Profile {
   id: string
   nickname: string

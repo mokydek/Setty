@@ -197,6 +197,16 @@ export const translations = {
     sell: {
       sentForReview: 'Sent for style review. Your asset will appear in the marketplace once a curator approves it.',
     },
+    reviews: {
+      title: 'Reviews',
+      count: 'reviews',
+      writeOne: 'Leave a review',
+      editYours: 'Edit your review',
+      rating: 'Rating',
+      placeholder: 'What did you think of this asset?',
+      submit: 'Submit Review',
+      empty: 'No reviews yet. Verified buyers can leave the first one.',
+    },
     curation: {
       title: 'Curation Queue',
       subtitle: 'Review pending submissions. Every approval is a style guarantee to buyers.',
@@ -433,6 +443,16 @@ export const translations = {
     },
     sell: {
       sentForReview: 'Отправлено на проверку стиля. Ассет появится в маркетплейсе после одобрения куратором.',
+    },
+    reviews: {
+      title: 'Отзывы',
+      count: 'отзывов',
+      writeOne: 'Оставить отзыв',
+      editYours: 'Изменить свой отзыв',
+      rating: 'Оценка',
+      placeholder: 'Что вы думаете об этом ассете?',
+      submit: 'Отправить отзыв',
+      empty: 'Отзывов пока нет. Первый может оставить подтверждённый покупатель.',
     },
     curation: {
       title: 'Очередь курации',

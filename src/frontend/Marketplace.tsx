@@ -15,6 +15,8 @@ import { supabase } from '../backend/supabase'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useAssetRatings, type AssetRating } from '../lib/useAssetRatings'
+import RatingSquares from '../components/RatingSquares'
 import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -24,7 +26,7 @@ type SortOption = (typeof SORT_OPTIONS)[number]
 
 const PAGE_SIZE = 12
 
-function AssetCard({ asset }: { asset: Asset }) {
+function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating }) {
   const { t } = useLanguage()
   const { items, addToCart } = useCart()
   const { user } = useAuth()
@@ -68,9 +70,14 @@ function AssetCard({ asset }: { asset: Asset }) {
         {t(`marketplace.styles.${asset.style}`)}
       </span>
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-4">
+      <span className="text-xs text-black/50 mb-2">
         {t('marketplace.by')} {asset.author_name}
       </span>
+      {rating && rating.review_count > 0 && (
+        <span className="mb-2">
+          <RatingSquares average={rating.avg_rating} count={rating.review_count} size={8} />
+        </span>
+      )}
 
       <div className="flex items-center justify-between mt-auto">
         <span className="text-sm font-semibold text-black">${asset.price.toFixed(2)}</span>
@@ -177,6 +184,7 @@ export default function Marketplace() {
   }, [activeStyle, debouncedQuery, sort, page])
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const ratings = useAssetRatings(assets.map((asset) => asset.id))
 
   return (
     <div className="px-8 py-12">
@@ -259,7 +267,7 @@ export default function Marketplace() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
                 {assets.map((asset) => (
-                  <AssetCard key={asset.id} asset={asset} />
+                  <AssetCard key={asset.id} asset={asset} rating={ratings[asset.id]} />
                 ))}
               </div>
 
