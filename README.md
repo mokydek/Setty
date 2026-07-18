@@ -56,6 +56,20 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 The `.env` file is required for Supabase authentication and data access to function. It is git ignored and must never be committed.
 
+### Database security (Row Level Security)
+
+All SQL migrations live in `supabase/migrations/` and must be applied in
+filename order. To apply one:
+
+1. Open your project in the [Supabase dashboard](https://supabase.com/dashboard).
+2. Go to **SQL Editor**, paste the contents of the migration file
+   (start with `supabase/migrations/0001_enable_rls.sql`) and click **Run**.
+3. Verify under **Authentication → Policies** that RLS is enabled on
+   `assets`, `profiles`, `purchases` and `bounties` and the policies are listed.
+
+`0001_enable_rls.sql` is mandatory: without it the anon key exposed in the
+browser can read and write any row in the database.
+
 ### Running Locally
 
 ```bash
