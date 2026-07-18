@@ -114,7 +114,10 @@ export default function Marketplace() {
     const fetchAssets = async () => {
       setIsLoading(true)
 
-      let request = supabase.from('assets').select('*', { count: 'exact' })
+      let request = supabase
+        .from('assets')
+        .select('*', { count: 'exact' })
+        .eq('review_status', 'approved')
 
       if (activeStyle !== 'all') {
         request = request.eq('style', activeStyle)

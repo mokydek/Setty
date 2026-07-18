@@ -16,6 +16,8 @@ export interface Asset {
   file_path?: string | null
   file_size_bytes?: number | null
   file_format?: string | null
+  review_status?: 'pending' | 'approved' | 'rejected'
+  rejection_reason?: string | null
 }
 
 export interface Bounty {
@@ -47,6 +49,7 @@ export interface Profile {
   nickname: string
   description: string
   avatar_url: string
+  role?: 'user' | 'curator'
 }
 
 export interface Purchase {

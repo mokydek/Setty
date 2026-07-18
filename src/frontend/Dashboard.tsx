@@ -74,6 +74,30 @@ function OwnedAssetCard({ asset }: { asset: Asset }) {
   )
 }
 
+function ReviewStatusBadge({ asset }: { asset: Asset }) {
+  const { t } = useLanguage()
+  const status = asset.review_status ?? 'approved'
+
+  return (
+    <div className="flex flex-col gap-1 mb-3">
+      <span
+        className={`text-[10px] font-medium uppercase tracking-widest px-2 py-1 border w-fit ${
+          status === 'approved'
+            ? 'border-[#0000FF] text-[#0000FF]'
+            : status === 'rejected'
+              ? 'border-black bg-black text-white'
+              : 'border-black text-black'
+        }`}
+      >
+        {t(`curation.status.${status}`)}
+      </span>
+      {status === 'rejected' && asset.rejection_reason && (
+        <span className="text-xs text-black/60">{asset.rejection_reason}</span>
+      )}
+    </div>
+  )
+}
+
 function MyListingCard({ asset, onDelete }: { asset: Asset; onDelete: (id: string) => void }) {
   const [imageFailed, setImageFailed] = useState(false)
 
@@ -93,7 +117,8 @@ function MyListingCard({ asset, onDelete }: { asset: Asset; onDelete: (id: strin
       </div>
 
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-4">${asset.price.toFixed(2)}</span>
+      <span className="text-xs text-black/50 mb-2">${asset.price.toFixed(2)}</span>
+      <ReviewStatusBadge asset={asset} />
 
       <div className="flex items-center gap-2 mt-auto">
         <Link

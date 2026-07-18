@@ -5,6 +5,8 @@ import { CartProvider } from './contexts/CartContext'
 import { WishlistProvider } from './contexts/WishlistContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
+import CuratorRoute from './components/CuratorRoute'
+import CurationQueue from './frontend/CurationQueue'
 import Landing from './landing/Landing'
 import Marketplace from './frontend/Marketplace'
 import Auth from './frontend/Auth'
@@ -81,6 +83,14 @@ export default function App() {
                       <ProtectedRoute>
                         <CheckoutSuccess />
                       </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/curation"
+                    element={
+                      <CuratorRoute>
+                        <CurationQueue />
+                      </CuratorRoute>
                     }
                   />
                   <Route path="/profile/:id" element={<PublicProfile />} />

@@ -191,6 +191,25 @@ export const translations = {
       downloadFailed: 'Could not create a download link. Try again.',
       noFile: 'No file attached to this asset yet.',
     },
+    sell: {
+      sentForReview: 'Sent for style review. Your asset will appear in the marketplace once a curator approves it.',
+    },
+    curation: {
+      title: 'Curation Queue',
+      subtitle: 'Review pending submissions. Every approval is a style guarantee to buyers.',
+      loading: 'Loading queue...',
+      empty: 'The queue is clear. Nothing pending review.',
+      approve: 'Approve',
+      reject: 'Reject',
+      confirmReject: 'Confirm Rejection',
+      rejectPlaceholder: 'Reason for rejection (shown to the seller)...',
+      shortcuts: 'A approve · R reject',
+      status: {
+        pending: 'Pending review',
+        approved: 'Approved',
+        rejected: 'Rejected',
+      },
+    },
     checkout: {
       waitingTitle: 'Confirming your payment',
       waitingText: 'We are waiting for the payment provider to confirm your order. This usually takes a few seconds.',
@@ -405,6 +424,25 @@ export const translations = {
       preparing: 'Готовим скачивание...',
       downloadFailed: 'Не удалось создать ссылку на скачивание. Попробуйте ещё раз.',
       noFile: 'К этому ассету пока не прикреплён файл.',
+    },
+    sell: {
+      sentForReview: 'Отправлено на проверку стиля. Ассет появится в маркетплейсе после одобрения куратором.',
+    },
+    curation: {
+      title: 'Очередь курации',
+      subtitle: 'Проверяйте новые ассеты. Каждое одобрение — гарантия стиля для покупателей.',
+      loading: 'Загрузка очереди...',
+      empty: 'Очередь пуста. Нет ассетов на проверке.',
+      approve: 'Одобрить',
+      reject: 'Отклонить',
+      confirmReject: 'Подтвердить отклонение',
+      rejectPlaceholder: 'Причина отклонения (увидит продавец)...',
+      shortcuts: 'A одобрить · R отклонить',
+      status: {
+        pending: 'На проверке',
+        approved: 'Одобрен',
+        rejected: 'Отклонён',
+      },
     },
     checkout: {
       waitingTitle: 'Подтверждаем оплату',

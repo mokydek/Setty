@@ -155,7 +155,7 @@ export default function SellAsset() {
       return
     }
 
-    setMessage('Опубликовано.')
+    setMessage(t('sell.sentForReview'))
     setTitle('')
     setAuthor('')
     setStyle(STYLE_KEYS[0])
