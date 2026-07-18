@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LanguageProvider } from './i18n/LanguageContext'
 import { AuthProvider } from './contexts/AuthContext'
@@ -6,24 +7,27 @@ import { WishlistProvider } from './contexts/WishlistContext'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import CuratorRoute from './components/CuratorRoute'
-import CurationQueue from './frontend/CurationQueue'
-import Landing from './landing/Landing'
-import Marketplace from './frontend/Marketplace'
-import Auth from './frontend/Auth'
-import Bounties from './frontend/Bounties'
-import BountyDetail from './frontend/BountyDetail'
-import CollectionPage from './frontend/CollectionPage'
-import License from './frontend/License'
-import Dashboard from './frontend/Dashboard'
-import Cart from './frontend/Cart'
-import SellAsset from './frontend/SellAsset'
-import Profile from './frontend/Profile'
-import PublicProfile from './frontend/PublicProfile'
-import AssetDetail from './frontend/AssetDetail'
-import EditAsset from './frontend/EditAsset'
-import Wishlist from './frontend/Wishlist'
-import CheckoutSuccess from './frontend/CheckoutSuccess'
-import NotFound from './frontend/NotFound'
+import { RouteFallback } from './components/Skeletons'
+
+// Route-level code splitting: each page loads on demand.
+const CurationQueue = lazy(() => import('./frontend/CurationQueue'))
+const Landing = lazy(() => import('./landing/Landing'))
+const Marketplace = lazy(() => import('./frontend/Marketplace'))
+const Auth = lazy(() => import('./frontend/Auth'))
+const Bounties = lazy(() => import('./frontend/Bounties'))
+const BountyDetail = lazy(() => import('./frontend/BountyDetail'))
+const CollectionPage = lazy(() => import('./frontend/CollectionPage'))
+const License = lazy(() => import('./frontend/License'))
+const Dashboard = lazy(() => import('./frontend/Dashboard'))
+const Cart = lazy(() => import('./frontend/Cart'))
+const SellAsset = lazy(() => import('./frontend/SellAsset'))
+const Profile = lazy(() => import('./frontend/Profile'))
+const PublicProfile = lazy(() => import('./frontend/PublicProfile'))
+const AssetDetail = lazy(() => import('./frontend/AssetDetail'))
+const EditAsset = lazy(() => import('./frontend/EditAsset'))
+const Wishlist = lazy(() => import('./frontend/Wishlist'))
+const CheckoutSuccess = lazy(() => import('./frontend/CheckoutSuccess'))
+const NotFound = lazy(() => import('./frontend/NotFound'))
 
 export default function App() {
   return (
@@ -32,6 +36,7 @@ export default function App() {
         <CartProvider>
           <WishlistProvider>
             <BrowserRouter>
+              <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Landing />} />
@@ -110,6 +115,7 @@ export default function App() {
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
+              </Suspense>
             </BrowserRouter>
           </WishlistProvider>
         </CartProvider>

@@ -11,6 +11,7 @@ import { PAYMENTS_ENABLED, createCheckout, rememberPendingCheckout } from '../li
 import { formatFileSize, resolveAssetAction } from '../lib/assetAccess'
 import { averageRating } from '../lib/ratings'
 import RatingSquares from '../components/RatingSquares'
+import { AssetDetailSkeleton } from '../components/Skeletons'
 import type { Asset, Review } from '../types/database.types'
 
 export default function AssetDetail() {
@@ -203,11 +204,7 @@ export default function AssetDetail() {
   }
 
   if (isLoading) {
-    return (
-      <div className="px-8 py-12">
-        <span className="text-sm font-medium text-black/40">Loading asset...</span>
-      </div>
-    )
+    return <AssetDetailSkeleton />
   }
 
   if (notFound || !asset) {

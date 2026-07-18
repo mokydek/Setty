@@ -1,22 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  ShoppingCart,
-  Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  ImageOff,
-  Heart,
-} from 'lucide-react'
+import { ShoppingCart, Search, ChevronDown, Check, ImageOff, Heart } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAssetRatings, type AssetRating } from '../lib/useAssetRatings'
+import { useInfiniteScroll } from '../lib/useInfiniteScroll'
+import { thumbnailUrl } from '../lib/images'
 import RatingSquares from '../components/RatingSquares'
+import { AssetGridSkeleton } from '../components/Skeletons'
 import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -24,7 +18,7 @@ const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] a
 const SORT_OPTIONS = ['newest', 'priceAsc', 'priceDesc'] as const
 type SortOption = (typeof SORT_OPTIONS)[number]
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 24
 
 function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating }) {
   const { t } = useLanguage()
@@ -44,8 +38,11 @@ function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating }) {
       <div className="relative rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
         {asset.image_url && !imageFailed ? (
           <img
-            src={asset.image_url}
+            src={thumbnailUrl(asset.image_url)}
             alt={asset.title}
+            loading="lazy"
+            width={600}
+            height={600}
             onError={() => setImageFailed(true)}
             className="w-full h-full object-cover"
           />
@@ -143,6 +140,7 @@ export default function Marketplace() {
   useEffect(() => {
     const fetchAssets = async () => {
       setIsLoading(true)
+      if (page === 1) setAssets([])
 
       // With a search term, go through the ranked search_assets RPC (FTS
       // with an ilike fallback for short/partial terms); otherwise browse
@@ -173,7 +171,8 @@ export default function Marketplace() {
       const { data, error, count } = await request
 
       if (!error && data) {
-        setAssets(data as Asset[])
+        const rows = data as Asset[]
+        setAssets((prev) => (page === 1 ? rows : [...prev, ...rows]))
         setTotalCount(count ?? 0)
       }
 
@@ -183,8 +182,13 @@ export default function Marketplace() {
     fetchAssets()
   }, [activeStyle, debouncedQuery, sort, page])
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const hasMore = assets.length < totalCount
   const ratings = useAssetRatings(assets.map((asset) => asset.id))
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    isLoading,
+    onLoadMore: () => setPage((prev) => prev + 1),
+  })
 
   return (
     <div className="px-8 py-12">
@@ -259,10 +263,8 @@ export default function Marketplace() {
             </span>
           </div>
 
-          {isLoading ? (
-            <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
-              <span className="text-sm font-medium text-black/40">Loading assets...</span>
-            </div>
+          {isLoading && assets.length === 0 ? (
+            <AssetGridSkeleton count={8} />
           ) : assets.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
@@ -271,30 +273,21 @@ export default function Marketplace() {
                 ))}
               </div>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-                  <button
-                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                    disabled={page === 1}
-                    className="rounded-none border border-black text-black px-4 py-2 flex items-center gap-2 text-sm font-medium hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    <ChevronLeft size={14} strokeWidth={1.5} />
-                    Previous
-                  </button>
+              {isLoading && <AssetGridSkeleton count={4} />}
 
-                  <span className="text-sm text-black/40">
-                    Page {page} of {totalPages}
-                  </span>
-
-                  <button
-                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                    disabled={page === totalPages}
-                    className="rounded-none border border-black text-black px-4 py-2 flex items-center gap-2 text-sm font-medium hover:bg-black hover:text-white transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                  >
-                    Next
-                    <ChevronRight size={14} strokeWidth={1.5} />
-                  </button>
-                </div>
+              {hasMore && (
+                <>
+                  <div ref={sentinelRef} aria-hidden="true" />
+                  <div className="flex justify-center border-t border-gray-200 pt-6">
+                    <button
+                      onClick={() => setPage((prev) => prev + 1)}
+                      disabled={isLoading}
+                      className="rounded-none border border-black text-black px-6 py-3 text-sm font-medium hover:bg-black hover:text-white transition-colors disabled:opacity-30"
+                    >
+                      {t('marketplace.loadMore')}
+                    </button>
+                  </div>
+                </>
               )}
             </>
           ) : (

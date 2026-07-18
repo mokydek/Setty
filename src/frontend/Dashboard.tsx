@@ -8,6 +8,8 @@ import { getSignedAssetFileUrl, triggerDownload } from '../lib/assetFiles'
 import { formatFileSize } from '../lib/assetAccess'
 import { useAssetRatings, type AssetRating } from '../lib/useAssetRatings'
 import RatingSquares from '../components/RatingSquares'
+import { AssetGridSkeleton, RowListSkeleton } from '../components/Skeletons'
+import { thumbnailUrl } from '../lib/images'
 import type { Asset, Bounty, Purchase } from '../types/database.types'
 
 type Tab = 'assets' | 'listings' | 'bounties' | 'working'
@@ -39,8 +41,11 @@ function OwnedAssetCard({ asset }: { asset: Asset }) {
       <div className="rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
         {asset.image_url && !imageFailed ? (
           <img
-            src={asset.image_url}
+            src={thumbnailUrl(asset.image_url)}
             alt={asset.title}
+            loading="lazy"
+            width={600}
+            height={600}
             onError={() => setImageFailed(true)}
             className="w-full h-full object-cover"
           />
@@ -116,8 +121,11 @@ function MyListingCard({
       <div className="rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
         {asset.image_url && !imageFailed ? (
           <img
-            src={asset.image_url}
+            src={thumbnailUrl(asset.image_url)}
             alt={asset.title}
+            loading="lazy"
+            width={600}
+            height={600}
             onError={() => setImageFailed(true)}
             className="w-full h-full object-cover"
           />
@@ -375,7 +383,7 @@ export default function Dashboard() {
 
       {tab === 'assets' &&
         (assetsLoading ? (
-          <span className="text-sm font-medium text-black/40">Loading assets...</span>
+          <AssetGridSkeleton count={4} />
         ) : ownedAssets.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {ownedAssets.map((asset) => (
@@ -388,7 +396,7 @@ export default function Dashboard() {
 
       {tab === 'listings' &&
         (listingsLoading ? (
-          <span className="text-sm font-medium text-black/40">Loading listings...</span>
+          <AssetGridSkeleton count={4} />
         ) : myListings.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {myListings.map((asset) => (
@@ -406,7 +414,7 @@ export default function Dashboard() {
 
       {tab === 'bounties' &&
         (bountiesLoading ? (
-          <span className="text-sm font-medium text-black/40">Loading bounties...</span>
+          <RowListSkeleton />
         ) : myBounties.length > 0 ? (
           <div className="flex flex-col gap-4">
             {myBounties.map((bounty) => (
@@ -419,7 +427,7 @@ export default function Dashboard() {
 
       {tab === 'working' &&
         (workingOnLoading ? (
-          <span className="text-sm font-medium text-black/40">Loading...</span>
+          <RowListSkeleton />
         ) : workingOnBounties.length > 0 ? (
           <div className="flex flex-col gap-4">
             {workingOnBounties.map((bounty) => (

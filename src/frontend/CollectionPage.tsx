@@ -9,6 +9,7 @@ import {
   computeCompleteness,
 } from '../lib/collectionCompleteness'
 import { useAssetRatings } from '../lib/useAssetRatings'
+import { thumbnailUrl } from '../lib/images'
 import RatingSquares from '../components/RatingSquares'
 import type { Asset, Collection } from '../types/database.types'
 
@@ -24,8 +25,11 @@ function CollectionAssetCard({ asset, rating }: { asset: Asset; rating?: { avg_r
       <div className="rounded-none bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
         {asset.image_url && !imageFailed ? (
           <img
-            src={asset.image_url}
+            src={thumbnailUrl(asset.image_url)}
             alt={asset.title}
+            loading="lazy"
+            width={600}
+            height={600}
             onError={() => setImageFailed(true)}
             className="w-full h-full object-cover"
           />
