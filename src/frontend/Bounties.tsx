@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
@@ -86,9 +86,14 @@ export default function Bounties() {
   const [bounties, setBounties] = useState<Bounty[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [tab, setTab] = useState<FilterTab>('all')
+  const [searchParams] = useSearchParams()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [style, setStyle] = useState<string>(STYLE_KEYS[0])
+  // Collection pages link here with ?style=<key> to pre-fill the form.
+  const [style, setStyle] = useState<string>(() => {
+    const fromUrl = searchParams.get('style')
+    return fromUrl && (STYLE_KEYS as readonly string[]).includes(fromUrl) ? fromUrl : STYLE_KEYS[0]
+  })
   const [reward, setReward] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)

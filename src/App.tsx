@@ -12,6 +12,7 @@ import Marketplace from './frontend/Marketplace'
 import Auth from './frontend/Auth'
 import Bounties from './frontend/Bounties'
 import BountyDetail from './frontend/BountyDetail'
+import CollectionPage from './frontend/CollectionPage'
 import Dashboard from './frontend/Dashboard'
 import Cart from './frontend/Cart'
 import SellAsset from './frontend/SellAsset'
@@ -37,6 +38,7 @@ export default function App() {
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/bounties" element={<Bounties />} />
                   <Route path="/bounty/:id" element={<BountyDetail />} />
+                  <Route path="/collection/:slug" element={<CollectionPage />} />
                   <Route
                     path="/dashboard"
                     element={

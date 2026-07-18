@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileArchive, Upload } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -11,7 +11,8 @@ import {
   getFileExtension,
   isAllowedAssetFile,
 } from '../lib/assetAccess'
-import type { Asset } from '../types/database.types'
+import { ASSET_CATEGORIES, categoryLabelKey } from '../lib/collectionCompleteness'
+import type { Asset, Collection } from '../types/database.types'
 
 type NewAsset = Omit<Asset, 'id' | 'created_at' | 'description' | 'file_path' | 'file_size_bytes' | 'file_format'>
 
@@ -19,13 +20,16 @@ const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
 
 export default function SellAsset() {
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const assetFileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState('')
   const [style, setStyle] = useState<string>(STYLE_KEYS[0])
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [collectionId, setCollectionId] = useState<string>('')
+  const [category, setCategory] = useState<string>('prop')
   const [price, setPrice] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [author, setAuthor] = useState('')
@@ -52,6 +56,27 @@ export default function SellAsset() {
     }
 
     setAssetFile(file)
+  }
+
+  useEffect(() => {
+    supabase
+      .from('collections')
+      .select('*')
+      .order('slug')
+      .then(({ data }) => {
+        const rows = (data as Collection[]) ?? []
+        setCollections(rows)
+        if (rows.length > 0) {
+          setCollectionId(rows[0].id)
+          setStyle(rows[0].style)
+        }
+      })
+  }, [])
+
+  const handleCollectionChange = (id: string) => {
+    setCollectionId(id)
+    const selected = collections.find((collection) => collection.id === id)
+    if (selected) setStyle(selected.style)
   }
 
   const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +127,8 @@ export default function SellAsset() {
       style,
       image_url: imageUrl,
       seller_id: user.id,
+      ...(collectionId ? { collection_id: collectionId } : {}),
+      category,
     }
 
     const { data, error: insertError } = await supabase
@@ -221,19 +248,58 @@ export default function SellAsset() {
             />
           </div>
 
+          {collections.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <label htmlFor="collection" className="text-xs font-medium text-black/60">
+                {t('collections.picker')}
+              </label>
+              <select
+                id="collection"
+                value={collectionId}
+                onChange={(e) => handleCollectionChange(e.target.value)}
+                className="rounded-none border border-black bg-white px-4 py-3 text-sm text-black outline-none focus:ring-0 focus:border-[#0000FF]"
+              >
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {language === 'ru' ? collection.name_ru : collection.name_en}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-black/40">{t('collections.pickerHint')}</span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <label htmlFor="style" className="text-xs font-medium text-black/60">
+                Style
+              </label>
+              <select
+                id="style"
+                value={style}
+                onChange={(e) => setStyle(e.target.value)}
+                className="rounded-none border border-black bg-white px-4 py-3 text-sm text-black outline-none focus:ring-0 focus:border-[#0000FF]"
+              >
+                {STYLE_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {t(`marketplace.styles.${key}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex flex-col gap-2">
-            <label htmlFor="style" className="text-xs font-medium text-black/60">
-              Style
+            <label htmlFor="category" className="text-xs font-medium text-black/60">
+              {t('marketplace.category')}
             </label>
             <select
-              id="style"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
               className="rounded-none border border-black bg-white px-4 py-3 text-sm text-black outline-none focus:ring-0 focus:border-[#0000FF]"
             >
-              {STYLE_KEYS.map((key) => (
+              {ASSET_CATEGORIES.map((key) => (
                 <option key={key} value={key}>
-                  {t(`marketplace.styles.${key}`)}
+                  {t(`marketplace.categories.${categoryLabelKey(key)}`)}
                 </option>
               ))}
             </select>

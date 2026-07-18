@@ -3,11 +3,10 @@ import {
   Box,
   Image,
   ArrowRight,
-  Mountain,
-  UserRound,
-  Package,
-  Sparkles,
-  LayoutGrid,
+  Triangle,
+  Zap,
+  Paintbrush,
+  Camera,
   Target,
 } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -28,12 +27,12 @@ const PREVIEW_ASSETS: PreviewAsset[] = [
   { id: 4, title: 'Photoreal Rock Set', styleKey: 'realistic', price: '$9.00', kind: 'model' },
 ]
 
-const CATEGORY_TILES = [
-  { key: 'environment', icon: Mountain },
-  { key: 'character', icon: UserRound },
-  { key: 'prop', icon: Package },
-  { key: 'vfx', icon: Sparkles },
-  { key: 'uiKit', icon: LayoutGrid },
+// Collection tiles: each links to a curated, style-guaranteed collection.
+const COLLECTION_TILES = [
+  { styleKey: 'lowPoly', slug: 'low-poly', icon: Triangle },
+  { styleKey: 'cyberpunk', slug: 'cyberpunk', icon: Zap },
+  { styleKey: 'handPainted', slug: 'hand-painted', icon: Paintbrush },
+  { styleKey: 'realistic', slug: 'realistic', icon: Camera },
 ]
 
 function PreviewCard({ asset }: { asset: PreviewAsset }) {
@@ -98,19 +97,19 @@ export default function Landing() {
       <section className="px-8 py-16 border-t border-gray-200">
         <div className="max-w-6xl mx-auto">
           <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-6 block">
-            {t('nav.categories')}
+            {t('collections.label')}
           </span>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 border border-black divide-x divide-y md:divide-y-0 divide-black">
-            {CATEGORY_TILES.map(({ key, icon: Icon }) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 border border-black divide-x divide-y md:divide-y-0 divide-black">
+            {COLLECTION_TILES.map(({ styleKey, slug, icon: Icon }) => (
               <Link
-                key={key}
-                to="/app"
+                key={slug}
+                to={`/collection/${slug}`}
                 className="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center hover:bg-black hover:text-white transition-colors group"
               >
                 <Icon size={28} strokeWidth={1.5} className="text-[#0000FF] group-hover:text-white transition-colors" />
                 <span className="text-sm font-semibold tracking-tight">
-                  {t(`marketplace.categories.${key}`)}
+                  {t(`marketplace.styles.${styleKey}`)}
                 </span>
               </Link>
             ))}

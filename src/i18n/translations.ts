@@ -197,6 +197,19 @@ export const translations = {
     sell: {
       sentForReview: 'Sent for style review. Your asset will appear in the marketplace once a curator approves it.',
     },
+    collections: {
+      label: 'Collections',
+      loading: 'Loading collection...',
+      notFound: 'Collection not found.',
+      guarantee: 'Every asset here is style-compatible with the rest.',
+      completeness: 'Collection completeness',
+      categoriesCovered: 'categories covered',
+      empty: 'This collection is waiting for its first approved assets.',
+      missingTitle: 'Missing something?',
+      missingText: 'Post a bounty and a verified artist will create the missing piece in this exact style.',
+      picker: 'Collection',
+      pickerHint: 'Your asset will be reviewed for style fit with this collection.',
+    },
     reviews: {
       title: 'Reviews',
       count: 'reviews',
@@ -443,6 +456,19 @@ export const translations = {
     },
     sell: {
       sentForReview: 'Отправлено на проверку стиля. Ассет появится в маркетплейсе после одобрения куратором.',
+    },
+    collections: {
+      label: 'Коллекции',
+      loading: 'Загрузка коллекции...',
+      notFound: 'Коллекция не найдена.',
+      guarantee: 'Каждый ассет здесь стилистически совместим с остальными.',
+      completeness: 'Наполненность коллекции',
+      categoriesCovered: 'категорий закрыто',
+      empty: 'Коллекция ждёт свои первые одобренные ассеты.',
+      missingTitle: 'Чего-то не хватает?',
+      missingText: 'Разместите баунти, и проверенный художник создаст недостающий элемент точно в этом стиле.',
+      picker: 'Коллекция',
+      pickerHint: 'Ассет пройдёт проверку на соответствие стилю этой коллекции.',
     },
     reviews: {
       title: 'Отзывы',

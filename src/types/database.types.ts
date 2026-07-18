@@ -18,6 +18,20 @@ export interface Asset {
   file_format?: string | null
   review_status?: 'pending' | 'approved' | 'rejected'
   rejection_reason?: string | null
+  collection_id?: string | null
+  category?: string
+}
+
+export interface Collection {
+  id: string
+  created_at?: string
+  slug: string
+  name_en: string
+  name_ru: string
+  description_en: string
+  description_ru: string
+  cover_url?: string | null
+  style: string
 }
 
 export interface Bounty {
