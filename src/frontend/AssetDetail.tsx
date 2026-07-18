@@ -7,6 +7,7 @@ import { useWishlist } from '../contexts/WishlistContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { supabase } from '../backend/supabase'
 import { getSignedAssetFileUrl, triggerDownload } from '../lib/assetFiles'
+import { PAYMENTS_ENABLED, createCheckout, rememberPendingCheckout } from '../lib/payments'
 import { formatFileSize, resolveAssetAction } from '../lib/assetAccess'
 import type { Asset } from '../types/database.types'
 
@@ -92,10 +93,33 @@ export default function AssetDetail() {
     triggerDownload(url, asset.file_path.split('/').pop() ?? asset.title)
   }
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (!asset) return
-    addToCart(asset)
-    navigate('/cart')
+
+    if (!PAYMENTS_ENABLED) {
+      addToCart(asset)
+      navigate('/cart')
+      return
+    }
+
+    if (!user) {
+      navigate('/auth')
+      return
+    }
+
+    setError(null)
+    setIsProcessing(true)
+
+    const { url, error: checkoutError } = await createCheckout([asset.id])
+    setIsProcessing(false)
+
+    if (!url) {
+      setError(checkoutError ?? 'Checkout could not be created.')
+      return
+    }
+
+    rememberPendingCheckout([asset.id])
+    window.location.href = url
   }
 
   const handleFreeDownload = async () => {
@@ -244,10 +268,11 @@ export default function AssetDetail() {
             ) : action === 'buy' ? (
               <button
                 onClick={handleBuy}
-                className="rounded-none bg-[#0000FF] text-white px-6 py-3 flex items-center gap-2 text-sm font-semibold hover:bg-black transition-colors"
+                disabled={isProcessing}
+                className="rounded-none bg-[#0000FF] text-white px-6 py-3 flex items-center gap-2 text-sm font-semibold hover:bg-black transition-colors disabled:opacity-50"
               >
                 <ShoppingCart size={16} strokeWidth={1.5} />
-                Buy
+                {isProcessing ? 'Please wait...' : 'Buy'}
               </button>
             ) : (
               <button

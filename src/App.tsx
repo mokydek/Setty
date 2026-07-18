@@ -17,6 +17,7 @@ import PublicProfile from './frontend/PublicProfile'
 import AssetDetail from './frontend/AssetDetail'
 import EditAsset from './frontend/EditAsset'
 import Wishlist from './frontend/Wishlist'
+import CheckoutSuccess from './frontend/CheckoutSuccess'
 import NotFound from './frontend/NotFound'
 
 export default function App() {
@@ -69,6 +70,14 @@ export default function App() {
                     element={
                       <ProtectedRoute>
                         <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/checkout/success"
+                    element={
+                      <ProtectedRoute>
+                        <CheckoutSuccess />
                       </ProtectedRoute>
                     }
                   />

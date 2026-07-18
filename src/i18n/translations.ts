@@ -149,6 +149,16 @@ export const translations = {
       downloadFailed: 'Could not create a download link. Try again.',
       noFile: 'No file attached to this asset yet.',
     },
+    checkout: {
+      waitingTitle: 'Confirming your payment',
+      waitingText: 'We are waiting for the payment provider to confirm your order. This usually takes a few seconds.',
+      successTitle: 'Payment confirmed',
+      successText: 'Your assets are ready. You can download them from your dashboard at any time.',
+      goToDownloads: 'Go to Downloads',
+      timeoutTitle: 'Payment is taking longer than usual',
+      timeoutText: 'Your payment was received but is still being processed. Check your dashboard in a few minutes.',
+      goToDashboard: 'Open Dashboard',
+    },
     auth: {
       signIn: 'Sign In',
       signUp: 'Sign Up',
@@ -311,6 +321,16 @@ export const translations = {
       preparing: 'Готовим скачивание...',
       downloadFailed: 'Не удалось создать ссылку на скачивание. Попробуйте ещё раз.',
       noFile: 'К этому ассету пока не прикреплён файл.',
+    },
+    checkout: {
+      waitingTitle: 'Подтверждаем оплату',
+      waitingText: 'Ждём подтверждения заказа от платёжного провайдера. Обычно это занимает несколько секунд.',
+      successTitle: 'Оплата подтверждена',
+      successText: 'Ваши ассеты готовы. Скачать их можно в кабинете в любой момент.',
+      goToDownloads: 'Перейти к загрузкам',
+      timeoutTitle: 'Оплата обрабатывается дольше обычного',
+      timeoutText: 'Платёж получен, но ещё обрабатывается. Проверьте кабинет через несколько минут.',
+      goToDashboard: 'Открыть кабинет',
     },
     auth: {
       signIn: 'Вход',

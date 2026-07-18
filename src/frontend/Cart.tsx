@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
+import { PAYMENTS_ENABLED, createCheckout, rememberPendingCheckout } from '../lib/payments'
 
 export default function Cart() {
   const { items, removeFromCart, cartTotal } = useCart()
@@ -25,6 +26,23 @@ export default function Cart() {
 
     setIsCheckingOut(true)
 
+    if (PAYMENTS_ENABLED) {
+      // Real payments: server-side prices, Lemon Squeezy hosted checkout.
+      const assetIds = items.map((item) => item.id)
+      const { url, error: checkoutError } = await createCheckout(assetIds)
+
+      if (!url) {
+        setIsCheckingOut(false)
+        setError(checkoutError ?? 'Checkout could not be created.')
+        return
+      }
+
+      rememberPendingCheckout(assetIds)
+      window.location.href = url
+      return
+    }
+
+    // Legacy dev-only path (VITE_PAYMENTS_ENABLED=false): free insert.
     const results = await Promise.all(
       items.map(async (item) => {
         const { error: insertError } = await supabase
