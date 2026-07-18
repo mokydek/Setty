@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import {
   Search,
@@ -23,6 +23,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { supabase } from '../backend/supabase'
+import { useDebouncedValue } from '../lib/useDebounce'
+import type { Asset } from '../types/database.types'
 
 const CATEGORY_ICONS = [
   { key: 'environment', icon: Mountain },
@@ -48,11 +50,56 @@ export default function Layout() {
   const [browseOpen, setBrowseOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const [results, setResults] = useState<Asset[]>([])
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const searchRef = useRef<HTMLFormElement>(null)
+  const debouncedQuery = useDebouncedValue(query.trim(), 300)
+
+  useEffect(() => {
+    if (debouncedQuery.length < 2) {
+      setResults([])
+      setDropdownOpen(false)
+      return
+    }
+
+    let cancelled = false
+    supabase
+      .rpc('search_assets', { term: debouncedQuery })
+      .limit(5)
+      .then(({ data }) => {
+        if (cancelled) return
+        setResults((data as Asset[]) ?? [])
+        setDropdownOpen(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [debouncedQuery])
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    navigate('/app')
+    const term = query.trim()
+    setDropdownOpen(false)
     setQuery('')
+    setMobileOpen(false)
+    navigate(term ? `/app?q=${encodeURIComponent(term)}` : '/app')
+  }
+
+  const handleResultClick = (assetId: string) => {
+    setDropdownOpen(false)
+    setQuery('')
+    navigate(`/asset/${assetId}`)
   }
 
   const handleSignOut = async () => {
@@ -189,15 +236,61 @@ export default function Layout() {
               )}
             </div>
 
-            <form onSubmit={handleSearch} className="hidden md:flex items-center border border-black px-3 py-2.5 gap-2 flex-1 max-w-xl">
-              <Search size={16} strokeWidth={1.5} className="text-black/40 shrink-0" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('nav.searchPlaceholder')}
-                className="text-sm outline-none bg-transparent w-full placeholder:text-black/30"
-              />
+            <form
+              ref={searchRef}
+              onSubmit={handleSearch}
+              className="hidden md:block relative flex-1 max-w-xl"
+            >
+              <div className="flex items-center border border-black px-3 py-2.5 gap-2">
+                <Search size={16} strokeWidth={1.5} className="text-black/40 shrink-0" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => results.length > 0 && setDropdownOpen(true)}
+                  placeholder={t('nav.searchPlaceholder')}
+                  className="text-sm outline-none bg-transparent w-full placeholder:text-black/30"
+                />
+              </div>
+
+              {dropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 rounded-none border border-black bg-white z-50">
+                  {results.length === 0 ? (
+                    <span className="block px-4 py-3 text-sm text-black/40">
+                      {t('nav.searchNoResults')}
+                    </span>
+                  ) : (
+                    <>
+                      {results.map((asset) => (
+                        <button
+                          key={asset.id}
+                          type="button"
+                          onClick={() => handleResultClick(asset.id)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-100 transition-colors"
+                        >
+                          <span className="h-9 w-9 shrink-0 bg-gray-100 border border-black/10 overflow-hidden flex items-center justify-center">
+                            {asset.image_url ? (
+                              <img src={asset.image_url} alt="" className="h-full w-full object-cover" />
+                            ) : null}
+                          </span>
+                          <span className="text-sm font-medium text-black truncate flex-1">
+                            {asset.title}
+                          </span>
+                          <span className="text-sm font-semibold text-black whitespace-nowrap">
+                            ${asset.price.toFixed(2)}
+                          </span>
+                        </button>
+                      ))}
+                      <button
+                        type="submit"
+                        className="w-full px-4 py-2.5 text-left text-sm font-medium text-[#0000FF] hover:bg-gray-100 transition-colors border-t border-gray-200"
+                      >
+                        {t('nav.searchViewAll')}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </form>
 
             <div className="hidden md:flex items-center gap-1 ml-auto">

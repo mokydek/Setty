@@ -19,6 +19,8 @@ export const translations = {
       visualStyles: 'Visual Styles',
       featured: 'Featured',
       featuredText: 'Hand picked drops from top rated creators, updated weekly.',
+      searchNoResults: 'Nothing found.',
+      searchViewAll: 'View all results',
     },
     landing: {
       hero: {
@@ -85,6 +87,7 @@ export const translations = {
       searchPlaceholder: 'Search assets or creators...',
       results: 'results',
       noResults: 'No assets match your filters.',
+      emptySearchBounty: 'Missing this asset? Post a bounty and a verified artist will create it in your exact style.',
       addToCart: 'Add to Cart',
       by: 'by',
       category: 'Category',
@@ -253,6 +256,8 @@ export const translations = {
       visualStyles: 'Визуальные стили',
       featured: 'Рекомендуем',
       featuredText: 'Отборные новинки от лучших авторов, обновление каждую неделю.',
+      searchNoResults: 'Ничего не найдено.',
+      searchViewAll: 'Все результаты',
     },
     landing: {
       hero: {
@@ -319,6 +324,7 @@ export const translations = {
       searchPlaceholder: 'Поиск ассетов или авторов...',
       results: 'результатов',
       noResults: 'Нет ассетов, подходящих под фильтры.',
+      emptySearchBounty: 'Не нашли нужный ассет? Разместите баунти, и проверенный художник создаст его точно в вашем стиле.',
       addToCart: 'В корзину',
       by: 'автор',
       category: 'Категория',

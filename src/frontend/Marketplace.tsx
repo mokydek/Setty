@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ShoppingCart,
   Search,
@@ -92,12 +92,13 @@ function AssetCard({ asset }: { asset: Asset }) {
 
 export default function Marketplace() {
   const { t } = useLanguage()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [assets, setAssets] = useState<Asset[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [activeStyle, setActiveStyle] = useState<string>('all')
-  const [query, setQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
+  const [debouncedQuery, setDebouncedQuery] = useState(() => (searchParams.get('q') ?? '').trim())
   const [sort, setSort] = useState<SortOption>('newest')
   const [page, setPage] = useState(1)
 
@@ -105,6 +106,28 @@ export default function Marketplace() {
     const timeout = setTimeout(() => setDebouncedQuery(query.trim()), 300)
     return () => clearTimeout(timeout)
   }, [query])
+
+  // The header search navigates here with ?q=term; pick up external changes.
+  useEffect(() => {
+    const urlQuery = searchParams.get('q') ?? ''
+    setQuery(urlQuery)
+    setDebouncedQuery(urlQuery.trim())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // Keep the URL shareable as the user types.
+  useEffect(() => {
+    const current = searchParams.get('q') ?? ''
+    if (current === debouncedQuery) return
+    const next = new URLSearchParams(searchParams)
+    if (debouncedQuery) {
+      next.set('q', debouncedQuery)
+    } else {
+      next.delete('q')
+    }
+    setSearchParams(next, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery])
 
   useEffect(() => {
     setPage(1)
@@ -114,24 +137,25 @@ export default function Marketplace() {
     const fetchAssets = async () => {
       setIsLoading(true)
 
-      let request = supabase
-        .from('assets')
-        .select('*', { count: 'exact' })
-        .eq('review_status', 'approved')
+      // With a search term, go through the ranked search_assets RPC (FTS
+      // with an ilike fallback for short/partial terms); otherwise browse
+      // the approved catalogue directly. Both return asset rows, so the
+      // same filters, sort and pagination apply.
+      let request =
+        debouncedQuery !== ''
+          ? supabase.rpc('search_assets', { term: debouncedQuery }, { count: 'exact' })
+          : supabase.from('assets').select('*', { count: 'exact' }).eq('review_status', 'approved')
 
       if (activeStyle !== 'all') {
         request = request.eq('style', activeStyle)
-      }
-
-      if (debouncedQuery !== '') {
-        request = request.or(`title.ilike.%${debouncedQuery}%,author_name.ilike.%${debouncedQuery}%`)
       }
 
       if (sort === 'priceAsc') {
         request = request.order('price', { ascending: true })
       } else if (sort === 'priceDesc') {
         request = request.order('price', { ascending: false })
-      } else {
+      } else if (debouncedQuery === '') {
+        // 'newest' while searching keeps the RPC's relevance ranking.
         request = request.order('created_at', { ascending: false })
       }
 
@@ -266,8 +290,21 @@ export default function Marketplace() {
               )}
             </>
           ) : (
-            <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-2">
+            <div className="border border-black/10 py-24 flex flex-col items-center justify-center gap-4 px-8 text-center">
               <span className="text-sm font-medium text-black/40">{t('marketplace.noResults')}</span>
+              {debouncedQuery !== '' && (
+                <>
+                  <p className="text-sm text-black/60 max-w-md">
+                    {t('marketplace.emptySearchBounty')}
+                  </p>
+                  <Link
+                    to="/bounties"
+                    className="rounded-none bg-[#0000FF] text-white px-6 py-3 text-sm font-semibold hover:bg-black transition-colors"
+                  >
+                    {t('landing.hero.postBounty')}
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </div>
