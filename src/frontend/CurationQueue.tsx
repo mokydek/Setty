@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Check, ImageOff, X } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
+import { formatPrice } from '../lib/format'
 import { supabase } from '../backend/supabase'
 import type { Asset } from '../types/database.types'
 
@@ -19,7 +20,7 @@ function PendingAssetCard({
   onReject: (asset: Asset, reason: string) => void
   isActing: boolean
 }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [imageFailed, setImageFailed] = useState(false)
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [reason, setReason] = useState('')
@@ -48,7 +49,7 @@ function PendingAssetCard({
         <div className="flex flex-col gap-1">
           <h3 className="text-lg font-bold tracking-tight text-black">{asset.title}</h3>
           <span className="text-xs text-black/50">
-            {t('marketplace.by')} {asset.author_name} &middot; ${asset.price.toFixed(2)}
+            {t('marketplace.by')} {asset.author_name} &middot; {formatPrice(asset.price, language)}
           </span>
         </div>
         <span className="text-xs font-medium text-[#0000FF] uppercase tracking-widest whitespace-nowrap">

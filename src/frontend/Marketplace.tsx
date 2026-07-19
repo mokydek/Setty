@@ -13,6 +13,7 @@ import RatingSquares from '../components/RatingSquares'
 import { AssetGridSkeleton } from '../components/Skeletons'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { track } from '../lib/analytics'
+import { formatPrice } from '../lib/format'
 import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -22,8 +23,8 @@ type SortOption = (typeof SORT_OPTIONS)[number]
 
 const PAGE_SIZE = 24
 
-function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating }) {
-  const { t } = useLanguage()
+function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating | undefined }) {
+  const { t, language } = useLanguage()
   const { items, addToCart } = useCart()
   const { user } = useAuth()
   const { isWishlisted, toggleWishlist } = useWishlist()
@@ -79,7 +80,7 @@ function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating }) {
       )}
 
       <div className="flex items-center justify-between mt-auto">
-        <span className="text-sm font-semibold text-black">${asset.price.toFixed(2)}</span>
+        <span className="text-sm font-semibold text-black">{formatPrice(asset.price, language)}</span>
         <button
           onClick={(event) => {
             event.stopPropagation()

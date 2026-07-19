@@ -11,11 +11,12 @@ import {
 import { useAssetRatings } from '../lib/useAssetRatings'
 import { thumbnailUrl } from '../lib/images'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { formatPrice } from '../lib/format'
 import RatingSquares from '../components/RatingSquares'
 import type { Asset, Collection } from '../types/database.types'
 
-function CollectionAssetCard({ asset, rating }: { asset: Asset; rating?: { avg_rating: number; review_count: number } }) {
-  const { t } = useLanguage()
+function CollectionAssetCard({ asset, rating }: { asset: Asset; rating?: { avg_rating: number; review_count: number } | undefined }) {
+  const { t, language } = useLanguage()
   const [imageFailed, setImageFailed] = useState(false)
 
   return (
@@ -51,7 +52,7 @@ function CollectionAssetCard({ asset, rating }: { asset: Asset; rating?: { avg_r
           <RatingSquares average={rating.avg_rating} count={rating.review_count} size={8} />
         </span>
       )}
-      <span className="text-sm font-semibold text-black mt-auto">${asset.price.toFixed(2)}</span>
+      <span className="text-sm font-semibold text-black mt-auto">{formatPrice(asset.price, language)}</span>
     </Link>
   )
 }

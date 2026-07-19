@@ -2,10 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../backend/supabase'
 import { isBountyStatus } from '../lib/bountyMachine'
+import { acceptBounty, createBounty, getAllBounties } from '../lib/api/bounties'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { track } from '../lib/analytics'
+import { formatPrice } from '../lib/format'
 import type { Bounty } from '../types/database.types'
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -38,7 +39,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function BountyCard({ bounty, onAccept, canAccept }: { bounty: Bounty; onAccept: (id: string) => void; canAccept: boolean }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   return (
     <div className="rounded-none border border-black bg-white p-6 flex flex-col gap-4">
@@ -59,7 +60,7 @@ function BountyCard({ bounty, onAccept, canAccept }: { bounty: Bounty; onAccept:
       <p className="text-sm text-black/60 leading-relaxed line-clamp-3">{bounty.description}</p>
 
       <div className="flex items-center justify-between mt-auto pt-2">
-        <span className="text-lg font-semibold text-[#0000FF]">${bounty.reward.toFixed(2)}</span>
+        <span className="text-lg font-semibold text-[#0000FF]">{formatPrice(bounty.reward, language)}</span>
         <div className="flex items-center gap-2">
           <Link
             to={`/bounty/${bounty.id}`}
@@ -103,14 +104,9 @@ export default function Bounties() {
 
   const fetchBounties = async () => {
     setIsLoading(true)
-    const { data, error } = await supabase
-      .from('bounties')
-      .select('*')
-      .order('created_at', { ascending: false })
 
-    if (!error && data) {
-      setBounties(data as Bounty[])
-    }
+    const result = await getAllBounties()
+    if (result.ok) setBounties(result.data)
 
     setIsLoading(false)
   }
@@ -143,21 +139,18 @@ export default function Bounties() {
 
     setSubmitting(true)
 
-    const { error } = await supabase.from('bounties').insert([
-      {
-        title,
-        description,
-        style,
-        reward: parseFloat(reward),
-        status: 'open',
-        user_id: user.id,
-      },
-    ])
+    const result = await createBounty({
+      title,
+      description,
+      style,
+      reward: parseFloat(reward),
+      user_id: user.id,
+    })
 
     setSubmitting(false)
 
-    if (error) {
-      setFormError(error.message)
+    if (!result.ok) {
+      setFormError(result.error)
       return
     }
 
@@ -175,12 +168,9 @@ export default function Bounties() {
       return
     }
 
-    const { error } = await supabase
-      .from('bounties')
-      .update({ status: 'in_progress', assignee_id: user.id })
-      .eq('id', bountyId)
+    const result = await acceptBounty(bountyId, user.id)
 
-    if (!error) {
+    if (result.ok) {
       track({ name: 'bounty_accepted', props: { bounty_id: bountyId } })
       await fetchBounties()
     }

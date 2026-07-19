@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Heart, ImageOff } from 'lucide-react'
 import { useWishlist } from '../contexts/WishlistContext'
 import { supabase } from '../backend/supabase'
+import { useLanguage } from '../i18n/LanguageContext'
+import { formatPrice } from '../lib/format'
 import type { Asset } from '../types/database.types'
 
 function WishlistCard({ asset, onRemove }: { asset: Asset; onRemove: (id: string) => void }) {
+  const { language } = useLanguage()
   const navigate = useNavigate()
   const [imageFailed, setImageFailed] = useState(false)
 
@@ -28,7 +31,7 @@ function WishlistCard({ asset, onRemove }: { asset: Asset; onRemove: (id: string
       </div>
 
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-4">${asset.price.toFixed(2)}</span>
+      <span className="text-xs text-black/50 mb-4">{formatPrice(asset.price, language)}</span>
 
       <button
         onClick={() => onRemove(asset.id)}

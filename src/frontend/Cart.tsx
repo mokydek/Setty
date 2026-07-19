@@ -5,8 +5,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 import { PAYMENTS_ENABLED, createCheckout, rememberPendingCheckout } from '../lib/payments'
 import { track } from '../lib/analytics'
+import { useLanguage } from '../i18n/LanguageContext'
+import { formatPrice } from '../lib/format'
 
 export default function Cart() {
+  const { language } = useLanguage()
   const { items, removeFromCart, cartTotal } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -68,7 +71,7 @@ export default function Cart() {
     }
 
     if (succeeded.length === 0) {
-      setError(`Checkout failed: ${failed[0].error?.message}`)
+      setError(`Checkout failed: ${failed[0]?.error?.message}`)
       return
     }
 
@@ -107,7 +110,7 @@ export default function Cart() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                  <span className="text-sm font-semibold text-black">${item.price.toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-black">{formatPrice(item.price, language)}</span>
                   <button
                     onClick={() => removeFromCart(item.id)}
                     className="text-sm font-medium text-black/50 hover:text-black transition-colors"
@@ -121,7 +124,7 @@ export default function Cart() {
 
           <div className="border-t border-black pt-6 flex items-center justify-between mb-8">
             <span className="text-sm font-medium text-black/60 uppercase tracking-widest">Total</span>
-            <span className="text-2xl font-bold tracking-tight text-black">${cartTotal.toFixed(2)}</span>
+            <span className="text-2xl font-bold tracking-tight text-black">{formatPrice(cartTotal, language)}</span>
           </div>
 
           <button

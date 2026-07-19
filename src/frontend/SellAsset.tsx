@@ -94,9 +94,10 @@ export default function SellAsset() {
       .then(({ data }) => {
         const rows = (data as Collection[]) ?? []
         setCollections(rows)
-        if (rows.length > 0) {
-          setCollectionId(rows[0].id)
-          setStyle(rows[0].style)
+        const first = rows[0]
+        if (first) {
+          setCollectionId(first.id)
+          setStyle(first.style)
         }
       })
   }, [])

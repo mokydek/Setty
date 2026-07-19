@@ -3,14 +3,17 @@ import { Link } from 'react-router-dom'
 import { Download, ImageOff, Pencil, Trash2 } from 'lucide-react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../backend/supabase'
 import { getSignedAssetFileUrl, triggerDownload } from '../lib/assetFiles'
+import { getSellerAssets, deleteAsset } from '../lib/api/assets'
+import { getOwnedAssets } from '../lib/api/purchases'
+import { getBountiesByAssignee, getBountiesByCreator, deleteBounty } from '../lib/api/bounties'
 import { formatFileSize } from '../lib/assetAccess'
 import { useAssetRatings, type AssetRating } from '../lib/useAssetRatings'
 import RatingSquares from '../components/RatingSquares'
 import { AssetGridSkeleton, RowListSkeleton } from '../components/Skeletons'
 import { thumbnailUrl } from '../lib/images'
-import type { Asset, Bounty, Purchase } from '../types/database.types'
+import { formatPrice } from '../lib/format'
+import type { Asset, Bounty } from '../types/database.types'
 
 type Tab = 'assets' | 'listings' | 'bounties' | 'working'
 
@@ -111,9 +114,10 @@ function MyListingCard({
   onDelete,
 }: {
   asset: Asset
-  rating?: AssetRating
+  rating?: AssetRating | undefined
   onDelete: (id: string) => void
 }) {
+  const { language } = useLanguage()
   const [imageFailed, setImageFailed] = useState(false)
 
   return (
@@ -135,7 +139,7 @@ function MyListingCard({
       </div>
 
       <h3 className="text-sm font-bold text-black tracking-tight mb-1">{asset.title}</h3>
-      <span className="text-xs text-black/50 mb-2">${asset.price.toFixed(2)}</span>
+      <span className="text-xs text-black/50 mb-2">{formatPrice(asset.price, language)}</span>
       {rating && rating.review_count > 0 && (
         <span className="mb-2">
           <RatingSquares average={rating.avg_rating} count={rating.review_count} size={8} />
@@ -207,13 +211,13 @@ function MyBountyRow({
 }
 
 function WorkingOnBountyRow({ bounty }: { bounty: Bounty }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
 
   return (
     <div className="rounded-none border border-black bg-white p-6 flex items-center justify-between gap-4">
       <div className="flex flex-col gap-1">
         <span className="text-sm font-bold text-black tracking-tight">{bounty.title}</span>
-        <span className="text-lg font-semibold text-[#0000FF]">${bounty.reward.toFixed(2)}</span>
+        <span className="text-lg font-semibold text-[#0000FF]">{formatPrice(bounty.reward, language)}</span>
       </div>
 
       <div className="flex items-center gap-6">
@@ -249,14 +253,8 @@ export default function Dashboard() {
     if (!user) return
     setAssetsLoading(true)
 
-    const { data, error } = await supabase
-      .from('purchases')
-      .select('*, assets(*)')
-      .eq('user_id', user.id)
-
-    if (!error && data) {
-      setOwnedAssets((data as Purchase[]).map((purchase) => purchase.assets))
-    }
+    const result = await getOwnedAssets(user.id)
+    if (result.ok) setOwnedAssets(result.data)
 
     setAssetsLoading(false)
   }
@@ -265,11 +263,8 @@ export default function Dashboard() {
     if (!user) return
     setListingsLoading(true)
 
-    const { data, error } = await supabase.from('assets').select('*').eq('seller_id', user.id)
-
-    if (!error && data) {
-      setMyListings(data as Asset[])
-    }
+    const result = await getSellerAssets(user.id)
+    if (result.ok) setMyListings(result.data)
 
     setListingsLoading(false)
   }
@@ -278,11 +273,8 @@ export default function Dashboard() {
     if (!user) return
     setBountiesLoading(true)
 
-    const { data, error } = await supabase.from('bounties').select('*').eq('user_id', user.id)
-
-    if (!error && data) {
-      setMyBounties(data as Bounty[])
-    }
+    const result = await getBountiesByCreator(user.id)
+    if (result.ok) setMyBounties(result.data)
 
     setBountiesLoading(false)
   }
@@ -291,14 +283,8 @@ export default function Dashboard() {
     if (!user) return
     setWorkingOnLoading(true)
 
-    const { data, error } = await supabase
-      .from('bounties')
-      .select('*')
-      .eq('assignee_id', user.id)
-
-    if (!error && data) {
-      setWorkingOnBounties(data as Bounty[])
-    }
+    const result = await getBountiesByAssignee(user.id)
+    if (result.ok) setWorkingOnBounties(result.data)
 
     setWorkingOnLoading(false)
   }
@@ -315,9 +301,9 @@ export default function Dashboard() {
   const handleDeleteBounty = async (bountyId: string) => {
     if (!window.confirm('Delete this bounty?')) return
 
-    const { error } = await supabase.from('bounties').delete().eq('id', bountyId)
+    const result = await deleteBounty(bountyId)
 
-    if (!error) {
+    if (result.ok) {
       await fetchMyBounties()
     }
   }
@@ -325,9 +311,9 @@ export default function Dashboard() {
   const handleDeleteListing = async (assetId: string) => {
     if (!window.confirm('Delete this listing?')) return
 
-    const { error } = await supabase.from('assets').delete().eq('id', assetId)
+    const result = await deleteAsset(assetId)
 
-    if (!error) {
+    if (result.ok) {
       await fetchMyListings()
     }
   }

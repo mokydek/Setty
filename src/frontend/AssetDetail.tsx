@@ -14,13 +14,14 @@ import RatingSquares from '../components/RatingSquares'
 import { AssetDetailSkeleton } from '../components/Skeletons'
 import { useDocumentMeta, useJsonLd } from '../lib/useDocumentMeta'
 import { track } from '../lib/analytics'
+import { formatPrice } from '../lib/format'
 import type { Asset, Review } from '../types/database.types'
 
 export default function AssetDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { addToCart } = useCart()
   const { isWishlisted, toggleWishlist } = useWishlist()
 
@@ -122,7 +123,7 @@ export default function AssetDetail() {
   const avg = averageRating(reviews.map((review) => review.rating))
 
   useDocumentMeta(
-    asset ? `${asset.title} — $${asset.price.toFixed(2)}` : undefined,
+    asset ? `${asset.title} — ${formatPrice(asset.price, language)}` : undefined,
     asset?.description || undefined,
   )
   useJsonLd(
@@ -336,7 +337,7 @@ export default function AssetDetail() {
           <div className="flex items-center justify-between mt-auto">
             <div className="flex flex-col gap-1">
               <span className="text-2xl font-bold tracking-tight text-black">
-                {asset.price > 0 ? `$${asset.price.toFixed(2)}` : 'Free'}
+                {asset.price > 0 ? formatPrice(asset.price, language) : 'Free'}
               </span>
               {reviews.length > 0 && <RatingSquares average={avg} count={reviews.length} />}
             </div>

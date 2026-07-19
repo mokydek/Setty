@@ -21,6 +21,7 @@ import {
   isAllowedAssetFile,
 } from '../lib/assetAccess'
 import { track } from '../lib/analytics'
+import { formatPrice } from '../lib/format'
 import type { Bounty, BountySubmission } from '../types/database.types'
 
 function StatusTimeline({ status }: { status: BountyStatus }) {
@@ -221,7 +222,7 @@ function SubmissionRow({
 export default function BountyDetail() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const navigate = useNavigate()
   const workFileInputRef = useRef<HTMLInputElement>(null)
   const previewInputRef = useRef<HTMLInputElement>(null)
@@ -463,7 +464,7 @@ export default function BountyDetail() {
           <div className="flex items-start justify-between gap-4 mb-2">
             <h1 className="text-3xl font-bold tracking-tight text-black">{bounty.title}</h1>
             <span className="text-xl font-semibold text-[#0000FF] whitespace-nowrap">
-              ${bounty.reward.toFixed(2)}
+              {formatPrice(bounty.reward, language)}
             </span>
           </div>
           <span className="text-xs font-medium text-black/50 uppercase tracking-widest">

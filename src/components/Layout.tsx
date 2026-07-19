@@ -24,6 +24,8 @@ import { useCart } from '../contexts/CartContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { supabase } from '../backend/supabase'
 import { useDebouncedValue } from '../lib/useDebounce'
+import { formatPrice } from '../lib/format'
+import { setProfileLocale } from '../lib/api/profiles'
 import type { Asset } from '../types/database.types'
 
 const CATEGORY_ICONS = [
@@ -80,7 +82,7 @@ export default function Layout() {
   // Keep the profile's email locale in sync with the UI language.
   useEffect(() => {
     if (!user) return
-    supabase.from('profiles').update({ locale: language }).eq('id', user.id).then(() => {})
+    setProfileLocale(user.id, language)
   }, [language, user])
 
   useEffect(() => {
@@ -283,7 +285,7 @@ export default function Layout() {
                             {asset.title}
                           </span>
                           <span className="text-sm font-semibold text-black whitespace-nowrap">
-                            ${asset.price.toFixed(2)}
+                            {formatPrice(asset.price, language)}
                           </span>
                         </button>
                       ))}

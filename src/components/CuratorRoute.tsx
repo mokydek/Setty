@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../backend/supabase'
+import { getProfileRole } from '../lib/api/profiles'
 import { resolveCuratorAccess } from '../lib/roleGuard'
 
 export default function CuratorRoute({ children }: { children: ReactNode }) {
@@ -16,15 +16,10 @@ export default function CuratorRoute({ children }: { children: ReactNode }) {
     }
 
     setIsRoleLoading(true)
-    supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setRole((data as { role?: string } | null)?.role ?? null)
-        setIsRoleLoading(false)
-      })
+    getProfileRole(user.id).then((result) => {
+      setRole(result.ok ? result.data : null)
+      setIsRoleLoading(false)
+    })
   }, [user])
 
   const access = resolveCuratorAccess({

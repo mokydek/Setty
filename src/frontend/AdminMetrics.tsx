@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
+import { formatPrice } from '../lib/format'
 import { supabase } from '../backend/supabase'
 
 interface FounderMetrics {
@@ -27,7 +28,7 @@ function StatTile({ label, value, accent = false }: { label: string; value: stri
 }
 
 export default function AdminMetrics() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [metrics, setMetrics] = useState<FounderMetrics | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,7 +66,7 @@ export default function AdminMetrics() {
         <h1 className="text-3xl font-bold tracking-tight text-black mb-10">{t('metrics.title')}</h1>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <StatTile label={t('metrics.gmv')} value={`$${metrics.total_gmv.toFixed(2)}`} accent />
+          <StatTile label={t('metrics.gmv')} value={formatPrice(metrics.total_gmv, language)} accent />
           <StatTile label={t('metrics.purchases')} value={String(metrics.total_purchases)} />
           <StatTile label={t('metrics.activeSellers')} value={String(metrics.active_sellers)} />
           <StatTile
@@ -98,7 +99,7 @@ export default function AdminMetrics() {
                   />
                 </div>
                 <span className="text-xs font-bold text-black w-24 text-right">
-                  ${row.gmv.toFixed(2)} ({row.purchases})
+                  {formatPrice(row.gmv, language)} ({row.purchases})
                 </span>
               </div>
             ))}
