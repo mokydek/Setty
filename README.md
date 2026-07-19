@@ -78,6 +78,23 @@ npm run dev
 
 The app will be available at the local address printed in the terminal.
 
+### Demo Seed Data
+
+A fresh Supabase project looks empty. To make the marketplace look alive for
+reviewers, run the seed script (server-side only, never commit the key):
+
+```bash
+SUPABASE_URL=https://<project-ref>.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key> \
+npm run seed
+```
+
+It idempotently creates 4 collections' worth of assets (~40, with generated
+geometric preview images), 3 demo seller accounts (marked with the
+&quot;(demo)&quot; suffix), 6 open bounties and a handful of purchases and
+reviews. Installing `sharp` (`npm i -D sharp`) upgrades previews from SVG to
+PNG. Re-running the script is safe: existing rows are skipped or upserted.
+
 ### Building for Production
 
 ```bash
