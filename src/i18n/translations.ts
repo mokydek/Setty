@@ -258,6 +258,16 @@ export const translations = {
       noAccount: "Don't have an account? Sign up",
       hasAccount: 'Already have an account? Sign in',
     },
+    styleCheck: {
+      label: 'AI style check',
+      scoring: 'Comparing your image against the collection style...',
+      match: 'Style match',
+      verdict: {
+        pass: 'likely to pass curation',
+        review: 'borderline, curators will look closely',
+        fail: 'unlikely to pass curation',
+      },
+    },
     license: {
       title: 'Setty Standard License',
       subtitle: 'Plain terms for buying and selling assets on Setty.',
@@ -547,6 +557,16 @@ export const translations = {
       pleaseWait: 'Подождите...',
       noAccount: 'Нет аккаунта? Зарегистрироваться',
       hasAccount: 'Уже есть аккаунт? Войти',
+    },
+    styleCheck: {
+      label: 'AI-проверка стиля',
+      scoring: 'Сравниваем изображение со стилем коллекции...',
+      match: 'Совпадение стиля',
+      verdict: {
+        pass: 'скорее всего пройдёт курацию',
+        review: 'на грани, кураторы посмотрят внимательно',
+        fail: 'вряд ли пройдёт курацию',
+      },
     },
     license: {
       title: 'Стандартная лицензия Setty',

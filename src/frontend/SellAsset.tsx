@@ -35,6 +35,32 @@ export default function SellAsset() {
   const [author, setAuthor] = useState('')
   const [assetFile, setAssetFile] = useState<File | null>(null)
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [styleScore, setStyleScore] = useState<number | null>(null)
+  const [styleVerdict, setStyleVerdict] = useState<'pass' | 'review' | 'fail' | null>(null)
+  const [isScoring, setIsScoring] = useState(false)
+
+  // Advisory style check: scores the preview image against the collection
+  // centroid. Never blocks submission - curators decide.
+  const runStyleCheck = async (image: string, collection: string) => {
+    if (!image || !collection) return
+    setIsScoring(true)
+    setStyleScore(null)
+    setStyleVerdict(null)
+
+    const { data } = await supabase.functions.invoke('style-score', {
+      body: { image_url: image, collection_id: collection },
+    })
+
+    const result = data as { score?: number; verdict?: string } | null
+    if (
+      typeof result?.score === 'number' &&
+      (result.verdict === 'pass' || result.verdict === 'review' || result.verdict === 'fail')
+    ) {
+      setStyleScore(result.score)
+      setStyleVerdict(result.verdict)
+    }
+    setIsScoring(false)
+  }
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [isPublishing, setIsPublishing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -78,6 +104,7 @@ export default function SellAsset() {
     setCollectionId(id)
     const selected = collections.find((collection) => collection.id === id)
     if (selected) setStyle(selected.style)
+    if (imageUrl) runStyleCheck(imageUrl, id)
   }
 
   const handleImageFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +129,7 @@ export default function SellAsset() {
     const { data } = supabase.storage.from('asset-images').getPublicUrl(filePath)
     setImageUrl(data.publicUrl)
     setIsUploading(false)
+    runStyleCheck(data.publicUrl, collectionId)
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -141,6 +169,9 @@ export default function SellAsset() {
       image_url: imageUrl,
       seller_id: user.id,
       ...(collectionId ? { collection_id: collectionId } : {}),
+      ...(styleScore !== null && styleVerdict
+        ? { style_score: styleScore, style_verdict: styleVerdict }
+        : {}),
       category,
     }
 
@@ -410,6 +441,30 @@ export default function SellAsset() {
               </div>
             )}
           </div>
+
+          {(isScoring || styleScore !== null) && (
+            <div className="flex flex-col gap-2 border border-black p-4">
+              <span className="text-xs font-medium text-black/60">{t('styleCheck.label')}</span>
+              {isScoring ? (
+                <span className="text-xs text-black/40">{t('styleCheck.scoring')}</span>
+              ) : (
+                styleScore !== null && (
+                  <>
+                    <div className="h-3 w-full border border-black">
+                      <div
+                        className="h-full bg-[#0000FF] transition-all"
+                        style={{ width: `${Math.round(styleScore * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-black">
+                      {t('styleCheck.match')}: {Math.round(styleScore * 100)}% —{' '}
+                      {t(`styleCheck.verdict.${styleVerdict}`)}
+                    </span>
+                  </>
+                )
+              )}
+            </div>
+          )}
 
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input

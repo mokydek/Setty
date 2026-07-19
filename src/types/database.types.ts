@@ -20,6 +20,8 @@ export interface Asset {
   rejection_reason?: string | null
   collection_id?: string | null
   category?: string
+  style_score?: number | null
+  style_verdict?: 'pass' | 'review' | 'fail' | null
 }
 
 export interface Collection {

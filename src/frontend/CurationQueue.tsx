@@ -56,6 +56,20 @@ function PendingAssetCard({
         </span>
       </div>
 
+      {typeof asset.style_score === 'number' && (
+        <div className="flex items-center gap-3">
+          <div className="h-2 flex-1 border border-black">
+            <div
+              className="h-full bg-[#0000FF]"
+              style={{ width: `${Math.round(asset.style_score * 100)}%` }}
+            />
+          </div>
+          <span className="text-xs font-medium text-black whitespace-nowrap">
+            {t('styleCheck.match')}: {Math.round(asset.style_score * 100)}%
+          </span>
+        </div>
+      )}
+
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => onApprove(asset)}
@@ -124,7 +138,14 @@ export default function CurationQueue() {
       .order('created_at', { ascending: true })
 
     if (!fetchError && data) {
-      setPending(data as Asset[])
+      // Lowest style score first: the most suspicious submissions surface
+      // at the top of the queue. Unscored assets sort last.
+      const rows = (data as Asset[]).slice().sort((a, b) => {
+        const scoreA = a.style_score ?? Number.POSITIVE_INFINITY
+        const scoreB = b.style_score ?? Number.POSITIVE_INFINITY
+        return scoreA - scoreB
+      })
+      setPending(rows)
       setSelectedIndex(0)
     }
     setIsLoading(false)
