@@ -28,6 +28,7 @@ const EditAsset = lazy(() => import('./frontend/EditAsset'))
 const Wishlist = lazy(() => import('./frontend/Wishlist'))
 const CheckoutSuccess = lazy(() => import('./frontend/CheckoutSuccess'))
 const NotFound = lazy(() => import('./frontend/NotFound'))
+const AdminMetrics = lazy(() => import('./frontend/AdminMetrics'))
 
 export default function App() {
   return (
@@ -46,6 +47,14 @@ export default function App() {
                   <Route path="/bounty/:id" element={<BountyDetail />} />
                   <Route path="/collection/:slug" element={<CollectionPage />} />
                   <Route path="/license" element={<License />} />
+                  <Route
+                    path="/admin/metrics"
+                    element={
+                      <CuratorRoute>
+                        <AdminMetrics />
+                      </CuratorRoute>
+                    }
+                  />
                   <Route
                     path="/dashboard"
                     element={

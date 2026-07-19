@@ -12,6 +12,7 @@ import {
   isAllowedAssetFile,
 } from '../lib/assetAccess'
 import { ASSET_CATEGORIES, categoryLabelKey } from '../lib/collectionCompleteness'
+import { track } from '../lib/analytics'
 import type { Asset, Collection } from '../types/database.types'
 
 type NewAsset = Omit<Asset, 'id' | 'created_at' | 'description' | 'file_path' | 'file_size_bytes' | 'file_format'>
@@ -226,6 +227,7 @@ export default function SellAsset() {
       return
     }
 
+    track({ name: 'asset_submitted', props: { style, price: parseFloat(price) } })
     setMessage(t('sell.sentForReview'))
     setTitle('')
     setAuthor('')

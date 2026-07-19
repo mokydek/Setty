@@ -12,6 +12,7 @@ import { thumbnailUrl } from '../lib/images'
 import RatingSquares from '../components/RatingSquares'
 import { AssetGridSkeleton } from '../components/Skeletons'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { track } from '../lib/analytics'
 import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -176,6 +177,12 @@ export default function Marketplace() {
         const rows = data as Asset[]
         setAssets((prev) => (page === 1 ? rows : [...prev, ...rows]))
         setTotalCount(count ?? 0)
+        if (debouncedQuery !== '' && page === 1) {
+          track({
+            name: 'search_performed',
+            props: { query: debouncedQuery, result_count: count ?? 0 },
+          })
+        }
       }
 
       setIsLoading(false)

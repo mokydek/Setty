@@ -5,7 +5,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { useCart } from '../contexts/CartContext'
 import { supabase } from '../backend/supabase'
-import { clearPendingCheckout, readPendingCheckout } from '../lib/payments'
+import { clearPendingCheckout, readPendingCheckout, readPendingCheckoutValue } from '../lib/payments'
+import { track } from '../lib/analytics'
 
 const POLL_INTERVAL_MS = 3000
 const MAX_POLLS = 40 // ~2 minutes: webhooks are usually delivered in seconds
@@ -42,6 +43,10 @@ export default function CheckoutSuccess() {
 
       const ownedCount = data?.length ?? 0
       if (ownedCount >= pendingIds.length) {
+        track({
+          name: 'purchase_completed',
+          props: { asset_count: pendingIds.length, value: readPendingCheckoutValue() },
+        })
         pendingIds.forEach((id) => removeFromCart(id))
         clearPendingCheckout()
         setStatus('confirmed')

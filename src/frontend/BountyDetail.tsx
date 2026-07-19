@@ -20,6 +20,7 @@ import {
   formatFileSize,
   isAllowedAssetFile,
 } from '../lib/assetAccess'
+import { track } from '../lib/analytics'
 import type { Bounty, BountySubmission } from '../types/database.types'
 
 function StatusTimeline({ status }: { status: BountyStatus }) {
@@ -308,6 +309,7 @@ export default function BountyDetail() {
     setError(null)
     try {
       await updateBountyStatus(next, { assignee_id: user.id })
+      track({ name: 'bounty_accepted', props: { bounty_id: bounty.id } })
       await fetchAll()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -395,6 +397,7 @@ export default function BountyDetail() {
       if (insertError) throw new Error(insertError.message)
 
       await updateBountyStatus(next)
+      track({ name: 'bounty_submitted', props: { bounty_id: bounty.id } })
 
       setWorkFile(null)
       setPreviewFile(null)
@@ -422,6 +425,7 @@ export default function BountyDetail() {
       if (subError) throw new Error(subError.message)
 
       await updateBountyStatus(next)
+      track({ name: 'bounty_approved', props: { bounty_id: bounty.id } })
       // TODO(payout): this is where the escrow payout hook will go once
       // seller payouts are implemented (release bounty.reward to the artist).
       await fetchAll()

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { track } from '../lib/analytics'
 import type { Asset } from '../types/database.types'
 
 export type CartItem = Asset
@@ -34,7 +35,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items])
 
   const addToCart = (asset: CartItem) => {
-    setItems((prev) => (prev.some((item) => item.id === asset.id) ? prev : [...prev, asset]))
+    setItems((prev) => {
+      if (prev.some((item) => item.id === asset.id)) return prev
+      track({ name: 'added_to_cart', props: { asset_id: asset.id } })
+      return [...prev, asset]
+    })
   }
 
   const removeFromCart = (id: string) => {

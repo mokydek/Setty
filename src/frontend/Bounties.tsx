@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 import { isBountyStatus } from '../lib/bountyMachine'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
+import { track } from '../lib/analytics'
 import type { Bounty } from '../types/database.types'
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -160,6 +161,7 @@ export default function Bounties() {
       return
     }
 
+    track({ name: 'bounty_posted', props: { style, reward: parseFloat(reward) } })
     setTitle('')
     setDescription('')
     setStyle(STYLE_KEYS[0])
@@ -179,6 +181,7 @@ export default function Bounties() {
       .eq('id', bountyId)
 
     if (!error) {
+      track({ name: 'bounty_accepted', props: { bounty_id: bountyId } })
       await fetchBounties()
     }
   }

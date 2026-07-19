@@ -297,8 +297,21 @@ export const translations = {
       sellerCheckboxRequired: 'You must accept the seller terms to publish.',
       footerLink: 'License',
     },
+    metrics: {
+      title: 'Founder Metrics',
+      loading: 'Loading metrics...',
+      gmv: 'GMV',
+      purchases: 'Purchases',
+      activeSellers: 'Active sellers',
+      fillRate: 'Bounty fill rate',
+      bountiesPosted: 'Bounties posted',
+      medianTimeToFill: 'Median time to fill',
+      gmvByMonth: 'GMV by month',
+      noData: 'No sales data yet.',
+    },
     footer: {
       brand: 'Setty',
+      analyticsNotice: 'Anonymous, cookieless product analytics. DNT respected.',
     },
   },
   ru: {
@@ -597,8 +610,21 @@ export const translations = {
       sellerCheckboxRequired: 'Для публикации нужно принять условия для продавцов.',
       footerLink: 'Лицензия',
     },
+    metrics: {
+      title: 'Метрики фаундера',
+      loading: 'Загрузка метрик...',
+      gmv: 'GMV',
+      purchases: 'Покупки',
+      activeSellers: 'Активные продавцы',
+      fillRate: 'Закрываемость баунти',
+      bountiesPosted: 'Размещено баунти',
+      medianTimeToFill: 'Медианное время закрытия',
+      gmvByMonth: 'GMV по месяцам',
+      noData: 'Данных о продажах пока нет.',
+    },
     footer: {
       brand: 'Setty',
+      analyticsNotice: 'Анонимная аналитика без cookie. DNT учитывается.',
     },
   },
 } as const

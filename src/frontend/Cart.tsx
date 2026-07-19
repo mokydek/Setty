@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 import { PAYMENTS_ENABLED, createCheckout, rememberPendingCheckout } from '../lib/payments'
+import { track } from '../lib/analytics'
 
 export default function Cart() {
   const { items, removeFromCart, cartTotal } = useCart()
@@ -25,6 +26,7 @@ export default function Cart() {
     }
 
     setIsCheckingOut(true)
+    track({ name: 'checkout_started', props: { asset_count: items.length, value: cartTotal } })
 
     if (PAYMENTS_ENABLED) {
       // Real payments: server-side prices, Lemon Squeezy hosted checkout.
@@ -37,7 +39,7 @@ export default function Cart() {
         return
       }
 
-      rememberPendingCheckout(assetIds)
+      rememberPendingCheckout(assetIds, cartTotal)
       window.location.href = url
       return
     }

@@ -13,6 +13,7 @@ import { averageRating } from '../lib/ratings'
 import RatingSquares from '../components/RatingSquares'
 import { AssetDetailSkeleton } from '../components/Skeletons'
 import { useDocumentMeta, useJsonLd } from '../lib/useDocumentMeta'
+import { track } from '../lib/analytics'
 import type { Asset, Review } from '../types/database.types'
 
 export default function AssetDetail() {
@@ -64,7 +65,9 @@ export default function AssetDetail() {
       if (fetchError || !data) {
         setNotFound(true)
       } else {
-        setAsset(data as Asset)
+        const found = data as Asset
+        setAsset(found)
+        track({ name: 'asset_viewed', props: { asset_id: found.id, style: found.style } })
       }
 
       setIsLoading(false)
@@ -192,6 +195,7 @@ export default function AssetDetail() {
 
     setError(null)
     setIsProcessing(true)
+    track({ name: 'checkout_started', props: { asset_count: 1, value: asset.price } })
 
     const { url, error: checkoutError } = await createCheckout([asset.id])
     setIsProcessing(false)
@@ -201,7 +205,7 @@ export default function AssetDetail() {
       return
     }
 
-    rememberPendingCheckout([asset.id])
+    rememberPendingCheckout([asset.id], asset.price)
     window.location.href = url
   }
 
@@ -232,6 +236,7 @@ export default function AssetDetail() {
     }
 
     setAlreadyOwned(true)
+    track({ name: 'purchase_completed', props: { asset_count: 1, value: 0 } })
     setMessage('Added to your assets.')
   }
 

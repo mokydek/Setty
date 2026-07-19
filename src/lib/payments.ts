@@ -28,8 +28,15 @@ export async function createCheckout(
 
 // The success page needs to know which assets to poll for after Lemon
 // Squeezy redirects back; sessionStorage survives the round-trip.
-export function rememberPendingCheckout(assetIds: string[]) {
+export function rememberPendingCheckout(assetIds: string[], value = 0) {
   window.sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(assetIds))
+  window.sessionStorage.setItem(`${PENDING_CHECKOUT_KEY}-value`, String(value))
+}
+
+export function readPendingCheckoutValue(): number {
+  const raw = window.sessionStorage.getItem(`${PENDING_CHECKOUT_KEY}-value`)
+  const value = raw ? Number(raw) : 0
+  return Number.isFinite(value) ? value : 0
 }
 
 export function readPendingCheckout(): string[] {
@@ -44,4 +51,5 @@ export function readPendingCheckout(): string[] {
 
 export function clearPendingCheckout() {
   window.sessionStorage.removeItem(PENDING_CHECKOUT_KEY)
+  window.sessionStorage.removeItem(`${PENDING_CHECKOUT_KEY}-value`)
 }
