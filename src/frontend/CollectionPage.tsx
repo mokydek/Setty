@@ -10,6 +10,7 @@ import {
 } from '../lib/collectionCompleteness'
 import { useAssetRatings } from '../lib/useAssetRatings'
 import { thumbnailUrl } from '../lib/images'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
 import RatingSquares from '../components/RatingSquares'
 import type { Asset, Collection } from '../types/database.types'
 
@@ -98,6 +99,15 @@ export default function CollectionPage() {
   }, [slug])
 
   const ratings = useAssetRatings(assets.map((asset) => asset.id))
+
+  useDocumentMeta(
+    collection ? (language === 'ru' ? collection.name_ru : collection.name_en) : undefined,
+    collection
+      ? language === 'ru'
+        ? collection.description_ru
+        : collection.description_en
+      : undefined,
+  )
 
   if (isLoading) {
     return (

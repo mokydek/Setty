@@ -12,6 +12,7 @@ import { formatFileSize, resolveAssetAction } from '../lib/assetAccess'
 import { averageRating } from '../lib/ratings'
 import RatingSquares from '../components/RatingSquares'
 import { AssetDetailSkeleton } from '../components/Skeletons'
+import { useDocumentMeta, useJsonLd } from '../lib/useDocumentMeta'
 import type { Asset, Review } from '../types/database.types'
 
 export default function AssetDetail() {
@@ -116,6 +117,37 @@ export default function AssetDetail() {
 
   const myReview = user ? reviews.find((review) => review.user_id === user.id) : undefined
   const avg = averageRating(reviews.map((review) => review.rating))
+
+  useDocumentMeta(
+    asset ? `${asset.title} — $${asset.price.toFixed(2)}` : undefined,
+    asset?.description || undefined,
+  )
+  useJsonLd(
+    asset
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: asset.title,
+          image: asset.image_url || undefined,
+          description: asset.description || undefined,
+          offers: {
+            '@type': 'Offer',
+            price: asset.price.toFixed(2),
+            priceCurrency: 'USD',
+            availability: 'https://schema.org/InStock',
+          },
+          ...(reviews.length > 0
+            ? {
+                aggregateRating: {
+                  '@type': 'AggregateRating',
+                  ratingValue: avg,
+                  reviewCount: reviews.length,
+                },
+              }
+            : {}),
+        }
+      : null,
+  )
 
   const handleSubmitReview = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()

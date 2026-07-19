@@ -11,6 +11,7 @@ import { useInfiniteScroll } from '../lib/useInfiniteScroll'
 import { thumbnailUrl } from '../lib/images'
 import RatingSquares from '../components/RatingSquares'
 import { AssetGridSkeleton } from '../components/Skeletons'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
 import type { Asset } from '../types/database.types'
 
 const STYLE_KEYS = ['all', 'lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -96,6 +97,7 @@ function AssetCard({ asset, rating }: { asset: Asset; rating?: AssetRating }) {
 
 export default function Marketplace() {
   const { t } = useLanguage()
+  useDocumentMeta(t('marketplace.title'), t('landing.hero.subtitle'))
   const [searchParams, setSearchParams] = useSearchParams()
   const [assets, setAssets] = useState<Asset[]>([])
   const [totalCount, setTotalCount] = useState(0)

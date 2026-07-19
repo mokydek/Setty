@@ -4,6 +4,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../backend/supabase'
 import { isBountyStatus } from '../lib/bountyMachine'
+import { useDocumentMeta } from '../lib/useDocumentMeta'
 import type { Bounty } from '../types/database.types'
 
 const STYLE_KEYS = ['lowPoly', 'cyberpunk', 'handPainted', 'realistic'] as const
@@ -81,6 +82,7 @@ function BountyCard({ bounty, onAccept, canAccept }: { bounty: Bounty; onAccept:
 
 export default function Bounties() {
   const { t } = useLanguage()
+  useDocumentMeta(t('bounties.title'), t('landing.features.bounty.description'))
   const { user } = useAuth()
   const navigate = useNavigate()
   const [bounties, setBounties] = useState<Bounty[]>([])

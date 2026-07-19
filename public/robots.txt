@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /cart
+Disallow: /wishlist
+Disallow: /profile
+Disallow: /curation
+Disallow: /checkout/
+
+Sitemap: https://setty.vercel.app/sitemap.xml
